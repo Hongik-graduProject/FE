@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter run *)",
+      "Bash(echo \"PID: $!\")",
+      "Bash(Start-Sleep -Seconds 15)",
+      "Bash(Get-Content \"C:\\\\Users\\\\diddh\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--project-disclosure-app\\\\fcce8d2d-3528-404a-bdb2-3045149e431b\\\\tasks\\\\bedhpx3k1.output\" -Tail 30)",
+      "PowerShell(Get-Process *)",
+      "Bash(disown)",
+      "Bash(pkill -f \"python -m http.server 8081\")",
+      "Bash(python -m http.server 8081)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8081/)",
+      "Bash(flutter analyze *)",
+      "PowerShell(Get-Command *)",
+      "Bash(curl -s http://localhost:8080)",
+      "PowerShell(flutter config *)",
+      "Read(//mnt/c/project/**)",
+      "Bash(flutter devices *)",
+      "PowerShell(flutter devices *)",
+      "PowerShell(Get-Content *)"
+    ]
+  }
+}

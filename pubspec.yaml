@@ -1,0 +1,33 @@
+name: disclosure_app
+description: 개인 투자자를 위한 공시 분석 & 기업 정보 앱
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # HTTP 통신
+  dio: ^5.4.0
+
+  # 로컬 저장소 (토큰 저장)
+  flutter_secure_storage: ^9.0.0
+
+  # 상태관리
+  provider: ^6.1.1
+
+  # 아이콘
+  cupertino_icons: ^1.0.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true

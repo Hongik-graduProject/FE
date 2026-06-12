@@ -1,0 +1,1984 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>모바일 앱 와이어프레임 (Visual)</title>
+<style>
+  /* ============================================================
+     PAGE & TYPOGRAPHY
+     ============================================================ */
+  @page {
+    size: A4 landscape;
+    margin: 8mm 10mm;
+    @bottom-center { content: counter(page) " / " counter(pages); font-size: 9pt; color: #888; }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+    color: #1a1a1a;
+    font-size: 10pt;
+    line-height: 1.5;
+  }
+  .cover {
+    page-break-after: always;
+    padding: 60px 40px;
+  }
+  .cover h1 {
+    font-size: 32pt;
+    color: #1a237e;
+    margin-bottom: 18px;
+    border-bottom: 4px solid #1a237e;
+    padding-bottom: 14px;
+  }
+  .cover h2 {
+    font-size: 14pt;
+    color: #5c6bc0;
+    margin: 24px 0 8px;
+    font-weight: 500;
+  }
+  .cover .meta {
+    font-size: 11pt;
+    line-height: 2;
+    color: #424242;
+  }
+  .cover .meta strong { color: #1a237e; min-width: 110px; display: inline-block; }
+  .cover .toc {
+    margin-top: 24px;
+    column-count: 2;
+    column-gap: 30px;
+    font-size: 10pt;
+    line-height: 1.9;
+  }
+  .cover .toc div { color: #424242; break-inside: avoid; }
+  .cover .toc .group {
+    color: #1a237e;
+    font-weight: 700;
+    margin-top: 8px;
+    font-size: 10.5pt;
+  }
+
+  /* ============================================================
+     PAGE LAYOUT — phone left, meta right
+     ============================================================ */
+  .screen-page {
+    page-break-before: always;
+    page-break-inside: avoid;
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+  }
+  .screen-page:first-of-type { page-break-before: auto; }
+
+  .phone-wrap {
+    flex: 0 0 auto;
+    width: 310px;
+  }
+  .phone-id {
+    font-size: 10pt;
+    font-weight: 700;
+    color: #1a237e;
+    margin-bottom: 2px;
+  }
+  .phone-title {
+    font-size: 12pt;
+    font-weight: 700;
+    color: #283593;
+    margin-bottom: 8px;
+    border-bottom: 2px solid #c5cae9;
+    padding-bottom: 4px;
+  }
+
+  /* ============================================================
+     PHONE FRAME
+     ============================================================ */
+  .phone {
+    width: 310px;
+    height: 605px;
+    background: #ffffff;
+    border: 6px solid #1f2937;
+    border-radius: 30px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    font-size: 8.5pt;
+  }
+  .phone .status-bar {
+    height: 24px;
+    background: #ffffff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    font-size: 8.5pt;
+    font-weight: 600;
+    color: #111;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .phone .header {
+    height: 48px;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    background: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+    gap: 8px;
+  }
+  .phone .header .back { font-size: 14pt; color: #1a237e; }
+  .phone .header .title {
+    flex: 1;
+    font-size: 11pt;
+    font-weight: 700;
+    color: #111;
+  }
+  .phone .header .right { color: #1a237e; font-size: 11pt; }
+  .phone .header.primary { background: #1a237e; color: #fff; }
+  .phone .header.primary .title { color: #fff; }
+  .phone .header.primary .back, .phone .header.primary .right { color: #fff; }
+
+  .phone .body {
+    padding: 14px 14px 70px;
+    height: calc(100% - 24px - 48px);
+    overflow: hidden;
+    background: #f5f7fa;
+  }
+
+  .phone .tabbar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 56px;
+    background: #ffffff;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    font-size: 7.5pt;
+  }
+  .phone .tabbar .tab {
+    text-align: center;
+    color: #9ca3af;
+    flex: 1;
+  }
+  .phone .tabbar .tab .ico { font-size: 14pt; display: block; margin-bottom: 1px; }
+  .phone .tabbar .tab.active { color: #1a237e; font-weight: 700; }
+
+  /* ============================================================
+     COMPONENTS
+     ============================================================ */
+  .card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .card.tight { padding: 10px 12px; }
+  .card.flat { box-shadow: none; }
+
+  .btn {
+    display: block;
+    width: 100%;
+    background: #1a237e;
+    color: #fff;
+    text-align: center;
+    padding: 12px 0;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 10pt;
+    margin: 6px 0;
+  }
+  .btn.secondary { background: #fff; color: #1a237e; border: 1.5px solid #1a237e; }
+  .btn.ghost { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
+  .btn.danger { background: #fee2e2; color: #dc2626; border: 1.5px solid #fca5a5; }
+  .btn.sm { padding: 8px 0; font-size: 9pt; border-radius: 8px; }
+
+  .input {
+    width: 100%;
+    background: #fff;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-size: 10pt;
+    color: #111;
+    margin-bottom: 6px;
+  }
+  .input.with-icon::before { content: "🔍"; margin-right: 8px; }
+  .input.placeholder { color: #9ca3af; }
+
+  .label {
+    font-size: 9pt;
+    color: #6b7280;
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: block;
+  }
+  .helper { font-size: 8pt; color: #9ca3af; margin-top: 2px; }
+
+  .badge {
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: 999px;
+    font-size: 8pt;
+    font-weight: 700;
+  }
+  .badge.red { background: #ef4444; color: #fff; }
+  .badge.dot { width: 8px; height: 8px; padding: 0; border-radius: 50%; }
+  .badge.tag { background: #e8eaf6; color: #1a237e; }
+  .badge.tag.ok { background: #dcfce7; color: #16a34a; }
+  .badge.tag.warn { background: #fef3c7; color: #b45309; }
+  .badge.market { background: #f3f4f6; color: #374151; font-weight: 600; }
+
+  .row { display: flex; align-items: center; gap: 8px; }
+  .row.between { justify-content: space-between; }
+  .row.tight { gap: 6px; }
+  .col { flex: 1; }
+
+  .price-up { color: #e53935; font-weight: 700; }
+  .price-down { color: #1976d2; font-weight: 700; }
+
+  .stock-row {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+  }
+  .stock-row .name { font-weight: 700; font-size: 10pt; color: #111; }
+  .stock-row .ticker { color: #9ca3af; font-size: 8.5pt; }
+  .stock-row .price { font-size: 10pt; font-weight: 700; color: #111; }
+
+  .folder-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .folder-card .icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: #4a90d9;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14pt;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .folder-card .icon.gray { background: #9ca3af; }
+  .folder-card .icon.green { background: #16a34a; }
+  .folder-card .icon.red { background: #ef4444; }
+  .folder-card .icon.purple { background: #8b5cf6; }
+  .folder-card .meta { flex: 1; }
+  .folder-card .name { font-weight: 700; font-size: 11pt; color: #111; }
+  .folder-card .desc { font-size: 8.5pt; color: #6b7280; margin-top: 2px; }
+
+  .news-card {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 10px;
+  }
+  .news-card .thumb {
+    width: 60px; height: 60px;
+    background: linear-gradient(135deg, #c5cae9, #9fa8da);
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+  .news-card .info { flex: 1; }
+  .news-card .title { font-size: 9pt; font-weight: 700; color: #111; margin-bottom: 6px; line-height: 1.4; }
+  .news-card .source { font-size: 8pt; color: #9ca3af; }
+
+  .tabs {
+    display: flex;
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+    margin: -14px -14px 12px;
+  }
+  .tabs .tab {
+    flex: 1;
+    text-align: center;
+    padding: 10px 0;
+    font-size: 9pt;
+    color: #6b7280;
+    border-bottom: 2px solid transparent;
+  }
+  .tabs .tab.active {
+    color: #1a237e;
+    font-weight: 700;
+    border-bottom-color: #1a237e;
+  }
+
+  .chip-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .chip {
+    background: #fff;
+    border: 1px solid #d1d5db;
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 8.5pt;
+    color: #374151;
+  }
+  .chip.active { background: #1a237e; color: #fff; border-color: #1a237e; }
+
+  /* ============================================================
+     META PANEL (right side of each screen page)
+     ============================================================ */
+  .meta-panel {
+    flex: 1;
+    padding-top: 4px;
+  }
+  .meta-panel h3 {
+    font-size: 10pt;
+    color: #1a237e;
+    margin-bottom: 4px;
+    margin-top: 10px;
+    border-left: 3px solid #1a237e;
+    padding-left: 8px;
+  }
+  .meta-panel h3:first-child { margin-top: 0; }
+  .meta-panel ul, .meta-panel ol { padding-left: 16px; margin: 2px 0; }
+  .meta-panel li { font-size: 8.5pt; line-height: 1.45; color: #374151; margin: 1px 0; }
+  .meta-panel p { font-size: 8.5pt; line-height: 1.45; }
+  .meta-panel .api-pill {
+    display: inline-block;
+    background: #e8eaf6;
+    color: #1a237e;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: "Monaco", "Menlo", monospace;
+    font-size: 8.5pt;
+    margin: 2px 4px 2px 0;
+  }
+  .meta-panel .api-method {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 7.5pt;
+    font-weight: 700;
+    margin-right: 4px;
+    color: #fff;
+    font-family: "Monaco", "Menlo", monospace;
+  }
+  .api-method.GET { background: #16a34a; }
+  .api-method.POST { background: #2563eb; }
+  .api-method.PATCH { background: #f59e0b; }
+  .api-method.PUT { background: #8b5cf6; }
+  .api-method.DELETE { background: #dc2626; }
+
+  .meta-panel table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 6px 0;
+    font-size: 8.5pt;
+  }
+  .meta-panel table th, .meta-panel table td {
+    border: 1px solid #e5e7eb;
+    padding: 5px 8px;
+    text-align: left;
+  }
+  .meta-panel table th { background: #f3f4f6; color: #1a237e; font-weight: 700; }
+
+  /* MODAL OVERLAY (for modal screens) */
+  .modal-overlay {
+    position: absolute;
+    top: 24px; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.45);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 10;
+  }
+  .modal {
+    background: #fff;
+    border-radius: 16px 16px 0 0;
+    padding: 18px 16px 24px;
+    width: 100%;
+  }
+  .modal h4 {
+    font-size: 11pt;
+    color: #111;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+
+  /* COLOR SWATCH for folder color picker */
+  .color-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin: 8px 0; }
+  .color-grid .sw { height: 28px; border-radius: 8px; border: 2px solid transparent; }
+  .color-grid .sw.selected { border-color: #1a237e; }
+
+  /* CHECKBOX / RADIO */
+  .check { width: 16px; height: 16px; border: 1.5px solid #9ca3af; border-radius: 4px; display: inline-block; vertical-align: middle; margin-right: 6px; }
+  .check.checked { background: #1a237e; border-color: #1a237e; position: relative; }
+  .check.checked::after { content: "✓"; color: #fff; font-size: 10pt; position: absolute; top: -3px; left: 2px; }
+  .radio { width: 16px; height: 16px; border: 1.5px solid #9ca3af; border-radius: 50%; display: inline-block; vertical-align: middle; margin-right: 8px; flex-shrink: 0; }
+  .radio.checked { border-color: #1a237e; border-width: 5px; }
+  .toggle { width: 36px; height: 20px; background: #d1d5db; border-radius: 999px; position: relative; display: inline-block; }
+  .toggle.on { background: #1a237e; }
+  .toggle::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: #fff; border-radius: 50%; }
+  .toggle.on::after { left: 18px; }
+
+  /* MISC */
+  .divider { height: 1px; background: #e5e7eb; margin: 10px 0; }
+  .section-title { font-size: 9.5pt; font-weight: 700; color: #6b7280; margin: 12px 0 6px; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     COVER PAGE
+     ============================================================ -->
+<div class="cover">
+  <h1>모바일 앱 와이어프레임</h1>
+  <div class="meta">
+    <div><strong>서비스</strong> 개인 투자자를 위한 공시 분석 &amp; 기업 정보 앱</div>
+    <div><strong>플랫폼</strong> iOS / Android 반응형 모바일</div>
+    <div><strong>기준 문서</strong> md/API명세서.md (36개 엔드포인트)</div>
+    <div><strong>화면 수</strong> 18개 (시작·인증·마이페이지·검색·기업상세·분석·알림·설정)</div>
+    <div><strong>작성일</strong> 2026-05-04</div>
+    <div><strong>변경 이력</strong> v3' (2026-05-04): 종목당 1:1 분석 모델 시스템으로 전환. 분석 모델 선택 모달 제거(구 W-16), 보고서 상세에 점수 시각화 추가(현 W-16), 화면 19→18개로 재정렬</div>
+  </div>
+
+  <h2>디자인 시스템</h2>
+  <div class="meta">
+    <div><strong>Primary</strong> <span style="display:inline-block;width:14px;height:14px;background:#1a237e;border-radius:3px;vertical-align:middle;"></span> #1A237E (브랜드, CTA)</div>
+    <div><strong>Accent</strong> <span style="display:inline-block;width:14px;height:14px;background:#4a90d9;border-radius:3px;vertical-align:middle;"></span> #4A90D9 (폴더 기본 색상)</div>
+    <div><strong>상승</strong> <span style="display:inline-block;width:14px;height:14px;background:#e53935;border-radius:3px;vertical-align:middle;"></span> #E53935 (주가 상승, 한국 표준)</div>
+    <div><strong>하락</strong> <span style="display:inline-block;width:14px;height:14px;background:#1976d2;border-radius:3px;vertical-align:middle;"></span> #1976D2 (주가 하락, 한국 표준)</div>
+    <div><strong>경고/배지</strong> <span style="display:inline-block;width:14px;height:14px;background:#ef4444;border-radius:3px;vertical-align:middle;"></span> #EF4444 (미확인 카운트)</div>
+    <div><strong>본문</strong> #1A1A1A · <strong>보조</strong> #6B7280 · <strong>배경</strong> #F5F7FA</div>
+  </div>
+
+  <h2>화면 목록</h2>
+  <div class="toc">
+    <div class="group">시작 / 인증</div>
+    <div>W-01. 스플래시 / 자동 토큰 검증</div>
+    <div>W-02. 로그인</div>
+    <div>W-03. 회원가입</div>
+
+    <div class="group">마이페이지 (USER / 관심기업관리)</div>
+    <div>W-04. 폴더 목록 (홈)</div>
+    <div>W-05. 폴더 상세 (종목 리스트)</div>
+    <div>W-06. 폴더 생성 / 편집 모달</div>
+    <div>W-07. 종목 메모 / 평단가 수정</div>
+
+    <div class="group">검색 (SEARCH / 종목 검색)</div>
+    <div>W-08. 검색 메인</div>
+    <div>W-09. 검색 결과 (자동완성 + 필터)</div>
+    <div>W-10. 폴더 선택 모달 (좋아요)</div>
+
+    <div class="group">기업 상세 (SEARCH / 기업별 상세페이지)</div>
+    <div>W-11. 기업 상세 — 정보</div>
+    <div>W-12. 기업 상세 — 뉴스</div>
+    <div>W-13. 기업 상세 — 재무</div>
+    <div>W-14. 기업 상세 — 공시</div>
+    <div>W-15. 기업 상세 — 분석</div>
+
+    <div class="group">분석 (ANALYSIS)</div>
+    <div>W-16. 분석 보고서 상세 (점수 시각화 포함)</div>
+
+    <div class="group">알림 (ALERT)</div>
+    <div>W-17. 알림 목록</div>
+
+    <div class="group">설정</div>
+    <div>W-18. 설정</div>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     W-01. 스플래시
+     ============================================================ -->
+<div class="screen-page">
+  <div class="phone-wrap">
+    <div class="phone-id">W-01</div>
+    <div class="phone-title">스플래시 / 자동 토큰 검증</div>
+    <div class="phone">
+      <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+      <div class="body" style="background: linear-gradient(180deg, #1a237e 0%, #283593 100%); display:flex; flex-direction:column; justify-content:center; align-items:center; height: calc(100% - 24px); padding: 0;">
+        <div style="width:88px;height:88px;background:#fff;border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:38pt;color:#1a237e;font-weight:900;margin-bottom:24px;box-shadow:0 8px 24px rgba(0,0,0,0.2);">📊</div>
+        <div style="color:#fff;font-size:18pt;font-weight:800;letter-spacing:-0.5px;">공시 분석</div>
+        <div style="color:#c5cae9;font-size:10pt;margin-top:8px;">개인 투자자를 위한 똑똑한 분석</div>
+        <div style="color:#7986cb;font-size:9pt;margin-top:80px;">◐ 로딩 중...</div>
+      </div>
+    </div>
+  </div>
+  <div class="meta-panel">
+    <h3>📍 진입 경로</h3>
+    <ul>
+      <li>앱 최초 실행</li>
+      <li>백그라운드 → 포그라운드 복귀 (토큰 만료 시)</li>
+    </ul>
+    <h3>🔌 호출 API</h3>
+    <div><span class="api-method POST">POST</span><span class="api-pill">/auth/refresh</span> (토큰 만료 시 자동)</div>
+    <h3>↪️ 다음 화면 분기</h3>
+    <table>
+      <tr><th>조건</th><th>이동</th></tr>
+      <tr><td>access_token 유효</td><td>W-04 폴더 목록 (즉시 200ms)</td></tr>
+      <tr><td>access 만료 + refresh 유효</td><td>토큰 갱신 후 W-04</td></tr>
+      <tr><td>둘 다 만료</td><td>W-02 로그인</td></tr>
+    </table>
+    <h3>🎨 디자인 노트</h3>
+    <ul>
+      <li>브랜드 그라데이션 배경 (#1A237E → #283593)</li>
+      <li>로고는 화면 중앙에 흰 라운드 카드로 강조</li>
+      <li>로딩 인디케이터는 하단 80px에 미니멀하게</li>
+    </ul>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     W-02. 로그인
+     ============================================================ -->
+<div class="screen-page">
+  <div class="phone-wrap">
+    <div class="phone-id">W-02</div>
+    <div class="phone-title">로그인</div>
+    <div class="phone">
+      <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+      <div class="header"><span class="back">‹</span><span class="title"></span></div>
+      <div class="body" style="padding: 24px 20px;">
+        <div style="text-align:center;margin:30px 0 24px;">
+          <div style="width:60px;height:60px;background:#1a237e;border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:24pt;color:#fff;">📊</div>
+          <div style="font-size:18pt;font-weight:800;margin-top:14px;color:#111;">로그인</div>
+          <div style="font-size:9pt;color:#6b7280;margin-top:4px;">계정에 로그인하여 시작하세요</div>
+        </div>
+        <label class="label">이메일</label>
+        <div class="input placeholder">📧 user@example.com</div>
+        <label class="label" style="margin-top:8px;">비밀번호</label>
+        <div class="input placeholder">🔒 ••••••••&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 👁</div>
+        <div class="btn" style="margin-top:14px;">로그인</div>
+        <div style="text-align:center;font-size:9pt;color:#6b7280;margin:14px 0;">비밀번호를 잊으셨나요?</div>
+        <div style="display:flex;align-items:center;gap:10px;margin:18px 0;">
+          <div style="flex:1;height:1px;background:#e5e7eb;"></div>
+          <span style="font-size:9pt;color:#9ca3af;">또는</span>
+          <div style="flex:1;height:1px;background:#e5e7eb;"></div>
+        </div>
+        <div class="btn secondary">회원가입 하기</div>
+      </div>
+    </div>
+  </div>
+  <div class="meta-panel">
+    <h3>🔌 호출 API</h3>
+    <div><span class="api-method POST">POST</span><span class="api-pill">/auth/login</span></div>
+    <div style="margin-top:4px;"><span class="api-method POST">POST</span><span class="api-pill">/notifications/fcm-token</span> (성공 후 백그라운드)</div>
+    <h3>📋 입력 필드</h3>
+    <table>
+      <tr><th>필드</th><th>검증</th></tr>
+      <tr><td>이메일</td><td>형식 (RFC 5322)</td></tr>
+      <tr><td>비밀번호</td><td>마스킹, 보기 토글</td></tr>
+    </table>
+    <h3>⚠️ 에러 표시</h3>
+    <ul>
+      <li><span class="badge tag">AUTH_INVALID</span> "이메일 또는 비밀번호가 일치하지 않습니다"</li>
+      <li>네트워크 오류 → 토스트 메시지</li>
+    </ul>
+    <h3>✅ 성공 처리</h3>
+    <ul>
+      <li>access_token / refresh_token 보안 저장 (Keychain / EncryptedSharedPreferences)</li>
+      <li>FCM 토큰 백그라운드 등록</li>
+      <li>W-04 폴더 목록으로 이동</li>
+    </ul>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     W-03. 회원가입
+     ============================================================ -->
+<div class="screen-page">
+  <div class="phone-wrap">
+    <div class="phone-id">W-03</div>
+    <div class="phone-title">회원가입</div>
+    <div class="phone">
+      <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+      <div class="header"><span class="back">‹</span><span class="title">회원가입</span></div>
+      <div class="body" style="padding: 16px 16px 70px;">
+        <label class="label">이메일</label>
+        <div class="input"><span style="color:#111;">user@example.com</span> <span style="float:right;color:#16a34a;font-size:9pt;">✓ 사용가능</span></div>
+        <div class="helper">이메일은 로그인 ID로 사용됩니다</div>
+        <label class="label" style="margin-top:10px;">비밀번호</label>
+        <div class="input"><span style="color:#111;">••••••••</span> <span style="float:right;">👁</span></div>
+        <div class="row tight" style="margin-top:4px;">
+          <div style="flex:1;height:3px;background:#16a34a;border-radius:2px;"></div>
+          <div style="flex:1;height:3px;background:#16a34a;border-radius:2px;"></div>
+          <div style="flex:1;height:3px;background:#e5e7eb;border-radius:2px;"></div>
+          <span style="font-size:8pt;color:#16a34a;font-weight:700;">강함</span>
+        </div>
+        <div class="helper">영문 + 숫자 조합 8자 이상</div>
+        <label class="label" style="margin-top:10px;">비밀번호 확인</label>
+        <div class="input"><span style="color:#111;">••••••••</span> <span style="float:right;color:#16a34a;font-size:9pt;">✓</span></div>
+        <label class="label" style="margin-top:10px;">닉네임 <span style="color:#9ca3af;font-weight:400;">(선택)</span></label>
+        <div class="input placeholder">미입력 시 자동 생성</div>
+        <div class="divider"></div>
+        <div style="font-size:9pt;line-height:2;">
+          <div><span class="check checked"></span>이용약관 동의 <span style="color:#dc2626;">(필수)</span> <span style="float:right;color:#1a237e;">보기 ›</span></div>
+          <div><span class="check checked"></span>개인정보 처리방침 <span style="color:#dc2626;">(필수)</span> <span style="float:right;color:#1a237e;">보기 ›</span></div>
+          <div><span class="check"></span>마케팅 정보 수신 <span style="color:#9ca3af;">(선택)</span></div>
+        </div>
+        <div class="btn" style="margin-top:14px;">가입하기</div>
+      </div>
+    </div>
+  </div>
+  <div class="meta-panel">
+    <h3>🔌 호출 API</h3>
+    <div><span class="api-method GET">GET</span><span class="api-pill">/auth/check-email</span> (이메일 입력 후 blur)</div>
+    <div style="margin-top:4px;"><span class="api-method POST">POST</span><span class="api-pill">/auth/signup</span> (가입 버튼)</div>
+    <h3>🔄 인터랙션</h3>
+    <ul>
+      <li>이메일 blur → check-email 자동 호출 → 우측에 ✓ 사용가능 / ✗ 이미 가입됨</li>
+      <li>비밀번호 강도 인디케이터 (약/중/강 컬러바)</li>
+      <li>비밀번호 확인 불일치 시 인라인 에러</li>
+      <li>필수 약관 체크 안 된 상태 → 가입 버튼 비활성화 (회색)</li>
+    </ul>
+    <h3>⚠️ 에러 케이스</h3>
+    <table>
+      <tr><th>HTTP</th><th>코드</th><th>표시</th></tr>
+      <tr><td>400</td><td>INVALID_PARAM</td><td>인라인 (이메일/비밀번호 필드)</td></tr>
+      <tr><td>409</td><td>DUPLICATE</td><td>"이미 가입된 이메일입니다"</td></tr>
+    </table>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     W-04. 폴더 목록 (홈)
+     ============================================================ -->
+<div class="screen-page">
+  <div class="phone-wrap">
+    <div class="phone-id">W-04</div>
+    <div class="phone-title">마이페이지 — 폴더 목록 (홈)</div>
+    <div class="phone">
+      <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+      <div class="header">
+        <span class="title" style="font-size:14pt;">마이페이지</span>
+        <span class="right" style="position:relative;">🔔<span class="badge red" style="position:absolute;top:-4px;right:-8px;">3</span></span>
+      </div>
+      <div class="body">
+        <div class="folder-card">
+          <div class="icon gray">📁</div>
+          <div class="meta">
+            <div class="name">기본 폴더</div>
+            <div class="desc">종목 5개 · 미확인 보고서 1</div>
+          </div>
+          <span class="badge red">1</span>
+        </div>
+        <div class="folder-card">
+          <div class="icon">📁</div>
+          <div class="meta">
+            <div class="name">반도체 관련주</div>
+            <div class="desc">종목 8개 · 미확인 보고서 3</div>
+          </div>
+          <span class="badge red">3</span>
+        </div>
+        <div class="folder-card">
+          <div class="icon green">📁</div>
+          <div class="meta">
+            <div class="name">바이오</div>
+            <div class="desc">종목 4개 · 미확인 0</div>
+          </div>
+        </div>
+        <div class="folder-card">
+          <div class="icon red">📁</div>
+          <div class="meta">
+            <div class="name">방산주</div>
+            <div class="desc">종목 3개 · 미확인 보고서 1</div>
+          </div>
+          <span class="badge red">1</span>
+        </div>
+        <div class="folder-card">
+          <div class="icon purple">📁</div>
+          <div class="meta">
+            <div class="name">2차전지</div>
+            <div class="desc">종목 6개 · 미확인 0</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:6px;">
+          <div class="btn secondary sm" style="flex:1;">+ 새 폴더</div>
+          <div class="btn ghost sm" style="flex:1;">⇅ 순서 편집</div>
+        </div>
+      </div>
+      <div class="tabbar">
+        <div class="tab active"><span class="ico">🏠</span>홈</div>
+        <div class="tab"><span class="ico">🔍</span>검색</div>
+        <div class="tab"><span class="ico">🔔</span>알림</div>
+        <div class="tab"><span class="ico">⚙️</span>설정</div>
+      </div>
+    </div>
+  </div>
+  <div class="meta-panel">
+    <h3>📍 진입 경로</h3>
+    <ul>
+      <li>로그인 직후 (W-02 → W-04)</li>
+      <li>하단탭 "홈" 클릭</li>
+    </ul>
+    <h3>🔌 호출 API</h3>
+    <div><span class="api-method GET">GET</span><span class="api-pill">/folders</span></div>
+    <h3>🧩 폴더 카드 구성</h3>
+    <ul>
+      <li>색상 아이콘 (folder.color)</li>
+      <li>폴더명 + 종목 개수 / 미확인 보고서 카운트</li>
+      <li>우측 빨간 배지: unread_disclosure_count</li>
+    </ul>
+    <h3>👆 인터랙션</h3>
+    <ul>
+      <li>카드 탭 → W-05 폴더 상세</li>
+      <li>카드 길게 누르기 → 컨텍스트 메뉴 (이름/색상/삭제)</li>
+      <li>"새 폴더" 버튼 → W-06 모달</li>
+      <li>"순서 편집" → 드래그 앤 드롭 모드 (<span class="api-method PUT">PUT</span><span class="api-pill">/folders/order</span>)</li>
+    </ul>
+    <h3>🔔 우측 상단 종</h3>
+    <ul>
+      <li>전체 미읽음 알림 개수 표시</li>
+      <li>탭 → W-17 알림 목록</li>
+    </ul>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     W-05. 폴더 상세
+     ============================================================ -->
+<div class="screen-page">
+  <div class="phone-wrap">
+    <div class="phone-id">W-05</div>
+    <div class="phone-title">폴더 상세 — 종목 리스트</div>
+    <div class="phone">
+      <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+      <div class="header">
+        <span class="back">‹</span>
+        <span class="title">반도체 관련주</span>
+        <span class="right">⋯</span>
+      </div>
+      <div class="body" style="padding: 12px;">
+        <div class="card">
+          <div class="row between">
+            <div>
+              <span class="name" style="font-size:11pt;font-weight:700;">삼성전자</span>
+              <span class="ticker" style="color:#9ca3af;font-size:8.5pt;">005930</span>
+            </div>
+            <span class="badge red">●2</span>
+          </div>
+          <div class="row" style="margin-top:6px;">
+            <span style="font-size:14pt;font-weight:800;color:#111;">₩72,000</span>
+            <span class="price-up" style="font-size:9pt;">▲ 1,100 (1.52%)</span>
+          </div>
+          <div class="divider"></div>
+          <div style="font-size:8.5pt;color:#374151;">📝 "3분기 실적 주목"</div>
+          <div style="font-size:8.5pt;color:#6b7280;">평단가 ₩68,000</div>
+          <div style="background:#e8eaf6;border-radius:8px;padding:8px 10px;margin-top:8px;">
+            <div style="font-size:8pt;color:#1a237e;font-weight:700;">📊 기본 모델</div>
+            <div style="font-size:8.5pt;color:#374151;line-height:1.4;margin-top:2px;">"2025Q4 실적 컨센서스 상회. HBM 수주 호조."</div>
+            <div style="font-size:7.5pt;color:#9ca3af;margin-top:4px;">📅 04/30 18:00 →</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="row between">
+            <div>
+              <span class="name" style="font-size:11pt;font-weight:700;">SK하이닉스</span>
+              <span class="ticker" style="color:#9ca3af;font-size:8.5pt;">000660</span>
+            </div>
+          </div>
+          <div class="row" style="margin-top:6px;">
+            <span style="font-size:14pt;font-weight:800;color:#111;">₩185,000</span>
+            <span class="price-down" style="font-size:9pt;">▼ 1,500 (-0.81%)</span>
+          </div>
+          <div class="divider"></div>
+          <div style="font-size:8.5pt;color:#9ca3af;">📝 메모 없음 · 평단가 미입력</div>
+          <div style="background:#fef3c7;border-radius:8px;padding:8px 10px;margin-top:8px;text-align:center;">
+            <div style="font-size:9pt;color:#b45309;font-weight:700;">📊 분석 모델 준비 중</div>
+            <div style="font-size:8.5pt;color:#92400e;margin-top:2px;">운영자가 모델을 정의 중입니다</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="row between">
+            <div>
+              <span class="name" style="font-size:11pt;font-weight:700;">DB하이텍</span>
+              <span class="ticker" style="color:#9ca3af;font-size:8.5pt;">000990</span>
+            </div>
+          </div>
+          <div class="row" style="margin-top:6px;">
+            <span style="font-size:14pt;font-weight:800;color:#111;">₩63,200</span>
+            <span class="price-up" style="font-size:9pt;">▲ 1,500 (2.43%)</span>
+          </div>
+          <div style="font-size:8pt;color:#374151;margin-top:4px;">📊 [성장주 모델] "매출 성장 둔화"</div>
+        </div>
+      </div>
+      <div class="tabbar">
+        <div class="tab active"><span class="ico">🏠</span>홈</div>
+        <div class="tab"><span class="ico">🔍</span>검색</div>
+        <div class="tab"><span class="ico">🔔</span>알림</div>
+        <div class="tab"><span class="ico">⚙️</span>설정</div>
+      </div>
+    </div>
+  </div>
+  <div class="meta-panel">
+    <h3>🔌 호출 API</h3>
+    <div><span class="api-method GET">GET</span><span class="api-pill">/folders/{folder_id}/items</span></div>
+    <h3>🧩 카드 4개 영역</h3>
+    <ol style="padding-left:18px;font-size:9pt;line-height:1.8;color:#374151;">
+      <li><b>헤더</b> — 종목명/코드, ●N 미확인 배지</li>
+      <li><b>시세</b> — 현재가, 변동률 (▲빨강 / ▼파랑)</li>
+      <li><b>메모/평단가</b> — 노션 "기업별 메모(평단가)" 매핑</li>
+      <li><b>분석 요약</b> — 노션 "분석내용 요약" 매핑</li>
+    </ol>
+    <h3>👆 카드 인터랙션</h3>
+    <table>
+      <tr><th>영역</th><th>액션</th></tr>
+      <tr><td>헤더</td><td>W-11 기업 상세</td></tr>
+      <tr><td>메모 영역</td><td>W-07 메모/평단가 모달</td></tr>
+      <tr><td>분석 요약 (있음)</td><td>W-16 보고서 상세</td></tr>
+      <tr><td>분석 요약 (없음)</td><td>비활성 (운영자 모델 정의 대기 안내만 표시)</td></tr>
+      <tr><td>좌측 스와이프</td><td>삭제 / 이동 (W-10)</td></tr>
+    </table>
+    <h3>🔃 정렬 (클라이언트)</h3>
+    <ul>
+      <li>1차: 미확인 보고서 카운트 내림차순</li>
+      <li>2차: 추가 시각 내림차순</li>
+    </ul>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     W-06. 폴더 생성/편집 모달
+     ============================================================ -->
+<div class="screen-page">
+  <div class="phone-wrap">
+    <div class="phone-id">W-06</div>
+    <div class="phone-title">폴더 생성 / 편집 모달</div>
+    <div class="phone">
+      <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+      <div class="header">
+        <span class="title" style="font-size:14pt;">마이페이지</span>
+        <span class="right">🔔</span>
+      </div>
+      <div class="body" style="filter: blur(0.5px); opacity:0.6;">
+        <div class="folder-card"><div class="icon gray">📁</div><div class="meta"><div class="name">기본 폴더</div><div class="desc">종목 5개</div></div></div>
+        <div class="folder-card"><div class="icon">📁</div><div class="meta"><div class="name">반도체 관련주</div><div class="desc">종목 8개</div></div></div>
+        <div class="folder-card"><div class="icon green">📁</div><div class="meta"><div class="name">바이오</div><div class="desc">종목 4개</div></div></div>
+      </div>
+      <div class="modal-overlay">
+        <div class="modal">
+          <h4>새 폴더 만들기</h4>
+          <label class="label">폴더 이름</label>
+          <div class="input placeholder">예: 2차전지 관련주</div>
+          <label class="label" style="margin-top:10px;">색상</label>
+          <div class="color-grid">
+            <div class="sw" style="background:#ef4444;"></div>
+            <div class="sw" style="background:#f59e0b;"></div>
+            <div class="sw" style="background:#facc15;"></div>
+            <div class="sw selected" style="background:#16a34a;"></div>
+            <div class="sw" style="background:#3b82f6;"></div>
+            <div class="sw" style="background:#8b5cf6;"></div>
+            <div class="sw" style="background:#a16207;"></div>
+            <div class="sw" style="background:#1f2937;"></div>
+            <div class="sw" style="background:#9ca3af;"></div>
+            <div class="sw" style="background:#ec4899;"></div>
+            <div class="sw" style="background:#06b6d4;"></div>
+            <div class="sw" style="background:#84cc16;"></div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:14px;">
+            <div class="btn ghost sm" style="flex:1;">취소</div>
+            <div class="btn sm" style="flex:1;">생성</div>
+          </div>
+        </div>
+      </div>
+      <div class="tabbar">
+        <div class="tab active"><span class="ico">🏠</span>홈</div>
+        <div class="tab"><span class="ico">🔍</span>검색</div>
+        <div class="tab"><span class="ico">🔔</span>알림</div>
+        <div class="tab"><span class="ico">⚙️</span>설정</div>
+      </div>
+    </div>
+  </div>
+  <div class="meta-panel">
+    <h3>📍 진입 경로</h3>
+    <ul>
+      <li>W-04 "+새 폴더" 버튼 (생성 모드)</li>
+      <li>W-05 "⋯ → 폴더 수정" (편집 모드)</li>
+    </ul>
+    <h3>🔌 호출 API</h3>
+    <div><span class="api-method POST">POST</span><span class="api-pill">/folders</span> (생성)</div>
+    <div style="margin-top:4px;"><span class="api-method PATCH">PATCH</span><span class="api-pill">/folders/{folder_id}</span> (수정)</div>
+    <h3>🎨 디자인</h3>
+    <ul>
+      <li>하단 시트(bottom sheet) 형태로 등장</li>
+      <li>배경은 어두운 반투명 + 뒤 화면 살짝 블러</li>
+      <li>색상 12개 그리드 (선택된 것은 #1A237E 테두리)</li>
+    </ul>
+    <h3>✅ Validation</h3>
+    <ul>
+      <li>이름 비어있으면 "생성" 버튼 비활성</li>
+      <li>이름 길이 1~30자</li>
+      <li>동일 이름 폴더 존재 시 <span class="badge tag">DUPLICATE</span> 인라인 에러</li>
+    </ul>
+    <h3>편집 모드 차이</h3>
+    <ul>
+      <li>제목 "새 폴더 만들기" → "폴더 수정"</li>
+      <li>기본 폴더는 이름 수정 불가 (색상만)</li>
+    </ul>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     W-07. 메모 / 평단가 수정
+     ============================================================ -->
+<div class="screen-page">
+  <div class="phone-wrap">
+    <div class="phone-id">W-07</div>
+    <div class="phone-title">종목 메모 / 평단가 수정</div>
+    <div class="phone">
+      <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+      <div class="header"><span class="back">‹</span><span class="title">반도체 관련주</span><span class="right">⋯</span></div>
+      <div class="body" style="filter: blur(0.5px); opacity:0.6;">
+        <div class="card"><div class="name">삼성전자 005930</div></div>
+      </div>
+      <div class="modal-overlay">
+        <div class="modal">
+          <h4>삼성전자 (005930)</h4>
+          <label class="label">📝 메모</label>
+          <div class="input" style="height:60px;"><span style="color:#111;">3분기 실적 주목</span></div>
+          <div class="helper" style="text-align:right;">14/100자</div>
+          <label class="label" style="margin-top:10px;">💰 평단가 (평균 매수가)</label>
+          <div class="input" style="font-size:14pt;font-weight:700;">₩ 68,000</div>
+          <div class="helper">손익 표시는 v3에서 미지원</div>
+          <div style="display:flex;gap:8px;margin-top:14px;">
+            <div class="btn ghost sm" style="flex:1;">취소</div>
+            <div class="btn sm" style="flex:1;">저장</div>
+          </div>
+        </div>
+      </div>
+      <div class="tabbar">
+        <div class="tab active"><span class="ico">🏠</span>홈</div>
+        <div class="tab"><span class="ico">🔍</span>검색</div>
+        <div class="tab"><span class="ico">🔔</span>알림</div>
+        <div class="tab"><span class="ico">⚙️</span>설정</div>
+      </div>
+    </div>
+  </div>
+  <div class="meta-panel">
+    <h3>📍 진입 경로</h3>
+    <ul><li>W-05 카드의 메모 영역 탭</li></ul>
+    <h3>🔌 호출 API</h3>
+    <div><span class="api-method PATCH">PATCH</span><span class="api-pill">/folders/items/{item_id}</span></div>
+    <h3>📋 입력 필드</h3>
+    <table>
+      <tr><th>필드</th><th>제약</th></tr>
+      <tr><td>memo</td><td>최대 100자, optional</td></tr>
+      <tr><td>avg_price</td><td>정수 (원 단위), optional</td></tr>
+    </table>
+    <h3>📤 전송 정책</h3>
+    <ul>
+      <li>변경된 필드만 PATCH로 전송</li>
+      <li>예: 메모만 변경 → <code>{"memo": "..."}</code></li>
+    </ul>
+    <h3>🎨 UX</h3>
+    <ul>
+      <li>모달 등장 시 자동 키보드 포커스 (memo)</li>
+      <li>저장 성공 → 토스트 + 모달 닫고 W-05로 복귀</li>
+    </ul>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     W-08. 검색 메인
+     ============================================================ -->
+<div class="screen-page">
+  <div class="phone-wrap">
+    <div class="phone-id">W-08</div>
+    <div class="phone-title">검색 메인</div>
+    <div class="phone">
+      <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+      <div class="header" style="padding:0 8px;">
+        <div class="input" style="flex:1;margin:0;font-size:9.5pt;color:#9ca3af;">🔍 종목명 또는 종목코드</div>
+        <span class="right" style="margin-left:8px;font-size:10pt;">취소</span>
+      </div>
+      <div class="body">
+        <div class="row between">
+          <div class="section-title">🕐 최근 검색어</div>
+          <span style="font-size:8.5pt;color:#1a237e;">전체삭제</span>
+        </div>
+        <div class="card tight">
+          <div class="row between" style="padding:4px 0;"><span style="font-size:9.5pt;">삼성전자</span><span style="color:#9ca3af;">✕</span></div>
+          <div class="divider" style="margin:4px 0;"></div>
+          <div class="row between" style="padding:4px 0;"><span style="font-size:9.5pt;">SK하이닉스</span><span style="color:#9ca3af;">✕</span></div>
+          <div class="divider" style="margin:4px 0;"></div>
+          <div class="row between" style="padding:4px 0;"><span style="font-size:9.5pt;">HBM</span><span style="color:#9ca3af;">✕</span></div>
+          <div class="divider" style="margin:4px 0;"></div>
+          <div class="row between" style="padding:4px 0;"><span style="font-size:9.5pt;">005930</span><span style="color:#9ca3af;">✕</span></div>
+        </div>
+        <div class="row between" style="margin-top:8px;">
+          <div class="section-title">🔥 실시간 인기 순위</div>
+          <span style="font-size:7.5pt;color:#9ca3af;">🔄 09:30 갱신</span>
+        </div>
+        <div class="card tight" style="padding:0;">
+          <div class="row" style="padding:8px 12px;border-bottom:1px solid #f3f4f6;"><span style="width:18px;font-weight:800;color:#1a237e;">1</span><span style="flex:1;font-size:9.5pt;font-weight:600;">삼성전자</span><span class="price-up" style="font-size:8.5pt;">▲1.52%</span></div>
+          <div class="row" style="padding:8px 12px;border-bottom:1px solid #f3f4f6;"><span style="width:18px;font-weight:800;color:#1a237e;">2</span><span style="flex:1;font-size:9.5pt;font-weight:600;">SK하이닉스</span><span class="price-down" style="font-size:8.5pt;">▼0.81%</span></div>
+          <div class="row" style="padding:8px 12px;border-bottom:1px solid #f3f4f6;"><span style="width:18px;font-weight:800;color:#1a237e;">3</span><span style="flex:1;font-size:9.5pt;font-weight:600;">카카오</span><span class="price-up" style="font-size:8.5pt;">▲3.21%</span></div>
+          <div class="row" style="padding:8px 12px;border-bottom:1px solid #f3f4f6;"><span style="width:18px;font-weight:800;color:#1a237e;">4</span><span style="flex:1;font-size:9.5pt;font-weight:600;">LG에너지솔루션</span><span class="price-up" style="font-size:8.5pt;">▲2.10%</span></div>
+          <div class="row" style="padding:8px 12px;border-bottom:1px solid #f3f4f6;"><span style="width:18px;font-weight:800;color:#1a237e;">5</span><span style="flex:1;font-size:9.5pt;font-weight:600;">현대차</span><span class="price-up" style="font-size:8.5pt;">▲0.95%</span></div>
+          <div class="row" style="padding:8px 12px;border-bottom:1px solid #f3f4f6;"><span style="width:18px;font-weight:800;color:#9ca3af;">6</span><span style="flex:1;font-size:9.5pt;">NAVER</span><span class="price-down" style="font-size:8.5pt;">▼1.20%</span></div>
+          <div class="row" style="padding:8px 12px;border-bottom:1px solid #f3f4f6;"><span style="width:18px;font-weight:800;color:#9ca3af;">7</span><span style="flex:1;font-size:9.5pt;">셀트리온</span><span class="price-up" style="font-size:8.5pt;">▲4.50%</span></div>
+          <div class="row" style="padding:8px 12px;"><span style="width:18px;font-weight:800;color:#9ca3af;">8</span><span style="flex:1;font-size:9.5pt;">POSCO홀딩스</span><span class="price-up" style="font-size:8.5pt;">▲2.30%</span></div>
+        </div>
+      </div>
+      <div class="tabbar">
+        <div class="tab"><span class="ico">🏠</span>홈</div>
+        <div class="tab active"><span class="ico">🔍</span>검색</div>
+        <div class="tab"><span class="ico">🔔</span>알림</div>
+        <div class="tab"><span class="ico">⚙️</span>설정</div>
+      </div>
+    </div>
+  </div>
+  <div class="meta-panel">
+    <h3>📍 진입 경로</h3>
+    <ul><li>하단탭 "검색" / 다른 화면의 검색 아이콘</li></ul>
+    <h3>🔌 호출 API (병렬)</h3>
+    <div><span class="api-method GET">GET</span><span class="api-pill">/stocks/recent</span></div>
+    <div style="margin-top:4px;"><span class="api-method GET">GET</span><span class="api-pill">/stocks/ranking</span></div>
+    <h3>🧩 두 영역</h3>
+    <ul>
+      <li><b>최근 검색어</b> — 항목별 ✕ 개별 삭제 / 전체삭제</li>
+      <li><b>실시간 인기 순위</b> — TOP 10 + 갱신 시각</li>
+    </ul>
+    <h3>👆 인터랙션</h3>
+    <table>
+      <tr><th>액션</th><th>결과</th></tr>
+      <tr><td>검색어 탭</td><td>해당 키워드로 W-09 진입</td></tr>
+      <tr><td>✕ 탭</td><td><span class="api-method DELETE">DELETE</span><span class="api-pill">/stocks/recent?keyword=</span></td></tr>
+      <tr><td>전체삭제</td><td><span class="api-method DELETE">DELETE</span><span class="api-pill">/stocks/recent</span></td></tr>
+      <tr><td>인기순위 탭</td><td>W-11 기업 상세</td></tr>
+    </table>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     W-09. 검색 결과
+     ============================================================ -->
+<div class="screen-page">
+  <div class="phone-wrap">
+    <div class="phone-id">W-09</div>
+    <div class="phone-title">검색 결과 (자동완성 + NLP + 필터)</div>
+    <div class="phone">
+      <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+      <div class="header" style="padding:0 8px;">
+        <div class="input" style="flex:1;margin:0;font-size:9.5pt;">🔍 반도체 <span style="float:right;color:#9ca3af;">✕</span></div>
+        <span class="right" style="margin-left:8px;font-size:10pt;">취소</span>
+      </div>
+      <div class="body">
+        <div class="card tight" style="background:linear-gradient(135deg,#e8eaf6,#c5cae9);border:none;">
+          <div style="font-size:9pt;color:#1a237e;font-weight:700;">🪄 NLP 검색</div>
+          <div style="font-size:9pt;color:#283593;margin-top:4px;">"최근 영업이익 늘어난 반도체" →</div>
+        </div>
+        <div class="section-title">자동완성</div>
+        <div class="card tight" style="padding:0;">
+          <div class="row between" style="padding:8px 12px;border-bottom:1px solid #f3f4f6;">
+            <span><b>005930</b> 삼성전자</span>
+            <span style="color:#e53935;">♥</span>
+          </div>
+          <div class="row between" style="padding:8px 12px;border-bottom:1px solid #f3f4f6;">
+            <span><b>000660</b> SK하이닉스</span>
+            <span style="color:#9ca3af;">♡</span>
+          </div>
+          <div class="row between" style="padding:8px 12px;">
+            <span><b>000990</b> DB하이텍</span>
+            <span style="color:#9ca3af;">♡</span>
+          </div>
+        </div>
+        <div class="section-title">필터</div>
+        <div class="chip-row">
+          <span class="chip active">반도체</span>
+          <span class="chip">방산</span>
+          <span class="chip">로봇</span>
+          <span class="chip">바이오</span>
+          <span class="chip">+</span>
+        </div>
+        <div class="row between"><div class="section-title">검색 결과 (3)</div><span style="font-size:8.5pt;color:#1a237e;">정렬: 가나다 ▼</span></div>
+        <div class="stock-row">
+          <div class="row between"><span><b>005930</b> 삼성전자</span><span style="color:#e53935;">♥</span></div>
+          <div class="row between" style="margin-top:4px;">
+            <span class="price">₩72,000</span>
+            <span class="price-up" style="font-size:9pt;">▲1.52%</span>
+          </div>
+          <div class="ticker" style="font-size:8pt;color:#9ca3af;margin-top:2px;">시총 4,300조</div>
+        </div>
+        <div class="stock-row">
+          <div class="row between"><span><b>000660</b> SK하이닉스</span><span style="color:#9ca3af;">♡</span></div>
+          <div class="row between" style="margin-top:4px;">
+            <span class="price">₩185,000</span>
+            <span class="price-down" style="font-size:9pt;">▼0.81%</span>
+          </div>
+          <div class="ticker" style="font-size:8pt;color:#9ca3af;margin-top:2px;">시총 1,300조</div>
+        </div>
+      </div>
+      <div class="tabbar">
+        <div class="tab"><span class="ico">🏠</span>홈</div>
+        <div class="tab active"><span class="ico">🔍</span>검색</div>
+        <div class="tab"><span class="ico">🔔</span>알림</div>
+        <div class="tab"><span class="ico">⚙️</span>설정</div>
+      </div>
+    </div>
+  </div>
+  <div class="meta-panel">
+    <h3>🔌 호출 API</h3>
+    <ul>
+      <li><span class="api-method GET">GET</span><span class="api-pill">/stocks/autocomplete?q=</span> (300ms debounce)</li>
+      <li><span class="api-method POST">POST</span><span class="api-pill">/stocks/recent</span> (엔터 시 자동 저장)</li>
+      <li><span class="api-method GET">GET</span><span class="api-pill">/stocks/search</span> (전체 결과)</li>
+    </ul>
+    <h3>🧩 NLP 검색 영역</h3>
+    <ul>
+      <li>일반 키워드 + 자연어 쿼리 분리</li>
+      <li>예: "최근 영업이익 늘어난 반도체"</li>
+      <li>서버에서 nlp_query 파라미터로 처리</li>
+    </ul>
+    <h3>❤️ 좋아요 토글</h3>
+    <ul>
+      <li>♡ 탭 → W-10 폴더 선택 모달</li>
+      <li>♥ (이미 등록) 탭 → 삭제 확인</li>
+    </ul>
+    <h3>🏷 필터</h3>
+    <ul>
+      <li>카테고리: 반도체/방산/로봇/바이오</li>
+      <li>"+" 칩 → 전체 카테고리 시트</li>
+      <li>정렬: 가나다 / 시총 / 거래량</li>
+    </ul>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     W-10. 폴더 선택 모달
+     ============================================================ -->
+<div class="screen-page">
+  <div class="phone-wrap">
+    <div class="phone-id">W-10</div>
+    <div class="phone-title">폴더 선택 모달 (좋아요)</div>
+    <div class="phone">
+      <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+      <div class="header" style="filter:blur(0.5px);"><span class="back">‹</span><span class="title">삼성전자</span><span class="right">♥</span></div>
+      <div class="body" style="filter: blur(0.5px); opacity:0.5;">
+        <div class="card"><div class="name">005930 KOSPI · 반도체</div><div style="font-size:18pt;font-weight:800;margin-top:8px;">₩72,000</div></div>
+      </div>
+      <div class="modal-overlay">
+        <div class="modal">
+          <h4>어느 폴더에 추가할까요?</h4>
+          <div style="text-align:center;font-size:9pt;color:#6b7280;margin-bottom:12px;">삼성전자 (005930)</div>
+          <div class="card tight" style="padding:0;margin-bottom:8px;">
+            <div class="row" style="padding:10px 12px;border-bottom:1px solid #f3f4f6;">
+              <span class="radio"></span>
+              <div class="icon" style="width:24px;height:24px;background:#9ca3af;border-radius:6px;margin-right:8px;"></div>
+              <span style="flex:1;font-size:9.5pt;">기본 폴더</span>
+              <span style="font-size:8pt;color:#9ca3af;">5개</span>
+            </div>
+            <div class="row" style="padding:10px 12px;border-bottom:1px solid #f3f4f6;">
+              <span class="radio checked"></span>
+              <div class="icon" style="width:24px;height:24px;background:#4a90d9;border-radius:6px;margin-right:8px;"></div>
+              <span style="flex:1;font-size:9.5pt;font-weight:700;">반도체 관련주</span>
+              <span style="font-size:8pt;color:#9ca3af;">8개</span>
+            </div>
+            <div class="row" style="padding:10px 12px;border-bottom:1px solid #f3f4f6;">
+              <span class="radio"></span>
+              <div class="icon" style="width:24px;height:24px;background:#16a34a;border-radius:6px;margin-right:8px;"></div>
+              <span style="flex:1;font-size:9.5pt;">바이오</span>
+              <span style="font-size:8pt;color:#9ca3af;">4개</span>
+            </div>
+            <div class="row" style="padding:10px 12px;">
+              <span class="radio"></span>
+              <div class="icon" style="width:24px;height:24px;background:#ef4444;border-radius:6px;margin-right:8px;"></div>
+              <span style="flex:1;font-size:9.5pt;">방산주</span>
+              <span style="font-size:8pt;color:#9ca3af;">3개</span>
+            </div>
+          </div>
+          <div class="btn ghost sm" style="margin-bottom:10px;">+ 새 폴더 만들어 추가</div>
+          <div style="display:flex;gap:8px;">
+            <div class="btn ghost sm" style="flex:1;">취소</div>
+            <div class="btn sm" style="flex:1;">추가하기</div>
+          </div>
+        </div>
+      </div>
+      <div class="tabbar">
+        <div class="tab"><span class="ico">🏠</span>홈</div>
+        <div class="tab active"><span class="ico">🔍</span>검색</div>
+        <div class="tab"><span class="ico">🔔</span>알림</div>
+        <div class="tab"><span class="ico">⚙️</span>설정</div>
+      </div>
+    </div>
+  </div>
+  <div class="meta-panel">
+    <h3>📍 진입 경로</h3>
+    <ul>
+      <li>W-09 검색 결과의 ♡ 탭</li>
+      <li>W-11 기업 상세의 ♡ 탭</li>
+      <li>W-05 카드 좌측 스와이프 "이동"</li>
+    </ul>
+    <h3>🔌 호출 API</h3>
+    <div><span class="api-method POST">POST</span><span class="api-pill">/folders/items</span> (등록)</div>
+    <div style="margin-top:4px;"><span class="api-method PUT">PUT</span><span class="api-pill">/folders/items/move</span> (이동)</div>
+    <h3>🎨 디자인</h3>
+    <ul>
+      <li>하단 시트 (slide-up)</li>
+      <li>라디오 단일 선택 (default = 마지막 사용 폴더)</li>
+      <li>선택 시 폴더 색상 아이콘 강조</li>
+      <li>"새 폴더 만들어 추가" → W-06으로 전환</li>
+    </ul>
+    <h3>⚠️ 에러</h3>
+    <ul>
+      <li><span class="badge tag">DUPLICATE</span> → "이 폴더에 이미 등록되어 있습니다"</li>
+    </ul>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     W-11. 기업 상세 - 정보
+     ============================================================ -->
+<div class="screen-page">
+  <div class="phone-wrap">
+    <div class="phone-id">W-11</div>
+    <div class="phone-title">기업 상세 — 정보 탭</div>
+    <div class="phone">
+      <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+      <div class="header"><span class="back">‹</span><span class="title">삼성전자</span><span class="right" style="color:#e53935;">♥</span></div>
+      <div style="background:#fff;padding:16px;">
+        <div class="row tight">
+          <span class="badge market">005930</span>
+          <span class="badge market">KOSPI</span>
+          <span class="badge tag">반도체</span>
+        </div>
+        <div style="font-size:24pt;font-weight:800;margin-top:8px;color:#111;">₩ 72,000</div>
+        <div class="price-up" style="font-size:11pt;">▲ 1,100 (+1.52%)</div>
+        <div style="font-size:9pt;color:#6b7280;margin-top:6px;line-height:1.5;">반도체, 스마트폰, 가전 등을 생산하는 글로벌 전자기업</div>
+      </div>
+      <div class="tabs">
+        <div class="tab active">정보</div>
+        <div class="tab">뉴스</div>
+        <div class="tab">재무</div>
+        <div class="tab">공시</div>
+        <div class="tab">분석</div>
+      </div>
+      <div class="body" style="padding:14px;">
+        <div class="section-title">주요 정보</div>
+        <div class="card tight" style="padding:0;">
+          <div class="row between" style="padding:8px 12px;border-bottom:1px solid #f3f4f6;"><span style="font-size:9pt;color:#6b7280;">시가총액</span><span style="font-weight:700;">₩4,300조</span></div>
+          <div class="row between" style="padding:8px 12px;border-bottom:1px solid #f3f4f6;"><span style="font-size:9pt;color:#6b7280;">거래량</span><span style="font-weight:700;">15,234,567</span></div>
+          <div class="row between" style="padding:8px 12px;border-bottom:1px solid #f3f4f6;"><span style="font-size:9pt;color:#6b7280;">52주 최고</span><span style="font-weight:700;">₩85,000</span></div>
+          <div class="row between" style="padding:8px 12px;"><span style="font-size:9pt;color:#6b7280;">52주 최저</span><span style="font-weight:700;">₩58,000</span></div>
+        </div>
+        <div class="section-title" style="margin-top:14px;">분석 모델 (운영자 정의)</div>
+        <div class="card" style="background:#e8eaf6;border-color:#c5cae9;">
+          <div>
+            <div style="font-size:9pt;color:#1a237e;font-weight:700;">📊 삼성전자 분석 모델</div>
+            <div style="font-size:8.5pt;color:#374151;margin-top:2px;">HBM 수주, 메모리 가격, 영업이익률 중심</div>
+            <div style="font-size:7.5pt;color:#7986cb;margin-top:6px;">평가 항목 4개 · 운영자 정의</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="meta-panel">
+    <h3>🔌 호출 API</h3>
+    <div><span class="api-method GET">GET</span><span class="api-pill">/stocks/{ticker}</span></div>
+    <h3>🧩 헤더 영역</h3>
+    <ul>
+      <li>종목명 + ♥ 토글 (등록 시 빨간색)</li>
+      <li>종목코드 / 시장 / 카테고리 뱃지</li>
+      <li>현재가 (24pt 강조)</li>
+      <li>변동: 한국 표준 — 상승 빨강 / 하락 파랑</li>
+      <li>한 줄 기업 소개</li>
+    </ul>
+    <h3>🗂 5탭 구조</h3>
+    <ol style="padding-left:18px;">
+      <li>정보 (W-11) — 기본 정보 / 적용 모델</li>
+      <li>뉴스 (W-12) — 관련 뉴스 무한 스크롤</li>
+      <li>재무 (W-13) — 분기/연간 재무제표</li>
+      <li>공시 (W-14) — DART 공시 목록</li>
+      <li>분석 (W-15) — 분석 보고서 히스토리</li>
+    </ol>
+    <h3>👆 ♥ 토글</h3>
+    <ul>
+      <li>♡ → W-10 폴더 선택 모달</li>
+      <li>♥ → 삭제 확인 다이얼로그</li>
+    </ul>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     W-12. 기업 상세 - 뉴스
+     ============================================================ -->
+<div class="screen-page">
+  <div class="phone-wrap">
+    <div class="phone-id">W-12</div>
+    <div class="phone-title">기업 상세 — 뉴스 탭</div>
+    <div class="phone">
+      <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+      <div class="header"><span class="back">‹</span><span class="title">삼성전자</span><span class="right" style="color:#e53935;">♥</span></div>
+      <div style="background:#fff;padding:10px 16px;border-bottom:1px solid #f3f4f6;">
+        <span class="badge market">005930</span> <span class="price-up" style="font-size:11pt;font-weight:700;">₩72,000 ▲1.52%</span>
+      </div>
+      <div class="tabs">
+        <div class="tab">정보</div>
+        <div class="tab active">뉴스</div>
+        <div class="tab">재무</div>
+        <div class="tab">공시</div>
+        <div class="tab">분석</div>
+      </div>
+      <div class="body" style="padding:12px;">
+        <div class="news-card">
+          <div class="thumb"></div>
+          <div class="info">
+            <div class="title">삼성전자, 2분기 HBM 수주 확대 전망</div>
+            <div class="source">한국경제 · 2시간 전</div>
+          </div>
+        </div>
+        <div class="news-card">
+          <div class="thumb" style="background:linear-gradient(135deg,#fce4ec,#f8bbd0);"></div>
+          <div class="info">
+            <div class="title">"삼성, 미국 텍사스 공장 2026 가동 본격화"</div>
+            <div class="source">매일경제 · 5시간 전</div>
+          </div>
+        </div>
+        <div class="news-card">
+          <div class="thumb" style="background:linear-gradient(135deg,#e8f5e9,#a5d6a7);"></div>
+          <div class="info">
+            <div class="title">삼성전자 주가, AI 호황에 8개월 만에 최고가</div>
+            <div class="source">머니투데이 · 어제</div>
+          </div>
+        </div>
+        <div class="news-card">
+          <div class="thumb" style="background:linear-gradient(135deg,#fff3e0,#ffcc80);"></div>
+          <div class="info">
+            <div class="title">반도체 업계, HBM3E 양산 경쟁 가열</div>
+            <div class="source">전자신문 · 어제</div>
+          </div>
+        </div>
+        <div class="news-card">
+          <div class="thumb" style="background:linear-gradient(135deg,#e3f2fd,#90caf9);"></div>
+          <div class="info">
+            <div class="title">삼성전자 1분기 잠정실적 발표 예정</div>
+            <div class="source">조선비즈 · 2일 전</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="meta-panel">
+    <h3>🔌 호출 API</h3>
+    <div><span class="api-method GET">GET</span><span class="api-pill">/stocks/{ticker}/news</span></div>
+    <h3>🧩 뉴스 카드 구성</h3>
+    <ul>
+      <li>썸네일 (60×60)</li>
+      <li>제목 (2줄 max, ellipsis)</li>
+      <li>출처 / 시각</li>
+    </ul>
+    <h3>👆 인터랙션</h3>
+    <ul>
+      <li>카드 탭 → 외부 브라우저로 원문 URL 열기</li>
+      <li>무한 스크롤 (하단 80% 도달 시 다음 페이지)</li>
+      <li>풀 투 리프레시 → 최신 뉴스 갱신</li>
+    </ul>
+    <h3>🎨 시각적 차별화</h3>
+    <ul>
+      <li>썸네일 없는 뉴스는 그라데이션 placeholder</li>
+      <li>출처별 컬러 hint 가능 (옵션)</li>
+    </ul>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     W-13. 기업 상세 - 재무
+     ============================================================ -->
+<div class="screen-page">
+  <div class="phone-wrap">
+    <div class="phone-id">W-13</div>
+    <div class="phone-title">기업 상세 — 재무 탭</div>
+    <div class="phone">
+      <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+      <div class="header"><span class="back">‹</span><span class="title">삼성전자</span><span class="right" style="color:#e53935;">♥</span></div>
+      <div style="background:#fff;padding:10px 16px;border-bottom:1px solid #f3f4f6;">
+        <span class="badge market">005930</span> <span class="price-up" style="font-size:11pt;font-weight:700;">₩72,000 ▲1.52%</span>
+      </div>
+      <div class="tabs">
+        <div class="tab">정보</div><div class="tab">뉴스</div>
+        <div class="tab active">재무</div>
+        <div class="tab">공시</div><div class="tab">분석</div>
+      </div>
+      <div class="body" style="padding:12px;">
+        <div class="section-title">주요 지표</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+          <div class="card tight" style="text-align:center;"><div style="font-size:7.5pt;color:#6b7280;">시가총액</div><div style="font-size:11pt;font-weight:800;color:#1a237e;">4,300조</div></div>
+          <div class="card tight" style="text-align:center;"><div style="font-size:7.5pt;color:#6b7280;">PER</div><div style="font-size:11pt;font-weight:800;color:#1a237e;">12.5</div></div>
+          <div class="card tight" style="text-align:center;"><div style="font-size:7.5pt;color:#6b7280;">PBR</div><div style="font-size:11pt;font-weight:800;color:#1a237e;">1.3</div></div>
+          <div class="card tight" style="text-align:center;"><div style="font-size:7.5pt;color:#6b7280;">EPS</div><div style="font-size:11pt;font-weight:800;color:#1a237e;">5,760</div></div>
+        </div>
+        <div class="row tight" style="margin:10px 0 6px;">
+          <span class="chip active">분기 ▼</span>
+          <span class="chip">최근 8 ▼</span>
+        </div>
+        <div class="section-title">매출액 추이 (조원)</div>
+        <div class="card" style="padding:14px 12px;">
+          <div style="display:flex;align-items:flex-end;gap:6px;height:80px;border-bottom:1px solid #e5e7eb;padding-bottom:4px;">
+            <div style="flex:1;background:#9fa8da;height:60%;border-radius:3px 3px 0 0;"></div>
+            <div style="flex:1;background:#9fa8da;height:65%;border-radius:3px 3px 0 0;"></div>
+            <div style="flex:1;background:#9fa8da;height:62%;border-radius:3px 3px 0 0;"></div>
+            <div style="flex:1;background:#9fa8da;height:70%;border-radius:3px 3px 0 0;"></div>
+            <div style="flex:1;background:#7986cb;height:68%;border-radius:3px 3px 0 0;"></div>
+            <div style="flex:1;background:#7986cb;height:72%;border-radius:3px 3px 0 0;"></div>
+            <div style="flex:1;background:#5c6bc0;height:75%;border-radius:3px 3px 0 0;"></div>
+            <div style="flex:1;background:#1a237e;height:90%;border-radius:3px 3px 0 0;"></div>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:4px;">
+            <div style="flex:1;font-size:7pt;color:#9ca3af;text-align:center;">23Q1</div>
+            <div style="flex:1;font-size:7pt;color:#9ca3af;text-align:center;">23Q2</div>
+            <div style="flex:1;font-size:7pt;color:#9ca3af;text-align:center;">23Q3</div>
+            <div style="flex:1;font-size:7pt;color:#9ca3af;text-align:center;">23Q4</div>
+            <div style="flex:1;font-size:7pt;color:#9ca3af;text-align:center;">24Q1</div>
+            <div style="flex:1;font-size:7pt;color:#9ca3af;text-align:center;">24Q2</div>
+            <div style="flex:1;font-size:7pt;color:#9ca3af;text-align:center;">24Q3</div>
+            <div style="flex:1;font-size:7pt;color:#1a237e;text-align:center;font-weight:700;">25Q4</div>
+          </div>
+        </div>
+        <div class="section-title" style="margin-top:8px;">분기 실적 (조원)</div>
+        <div class="card tight" style="padding:0;">
+          <div class="row" style="padding:6px 10px;background:#f3f4f6;font-size:8pt;font-weight:700;color:#1a237e;">
+            <span style="flex:1;">기간</span><span style="flex:1;text-align:right;">매출</span><span style="flex:1;text-align:right;">영업익</span><span style="flex:1;text-align:right;">순익</span>
+          </div>
+          <div class="row" style="padding:6px 10px;font-size:8.5pt;border-top:1px solid #f3f4f6;"><span style="flex:1;">25Q4</span><span style="flex:1;text-align:right;font-weight:700;">78</span><span style="flex:1;text-align:right;font-weight:700;">9.2</span><span style="flex:1;text-align:right;font-weight:700;">6.8</span></div>
+          <div class="row" style="padding:6px 10px;font-size:8.5pt;border-top:1px solid #f3f4f6;"><span style="flex:1;">25Q3</span><span style="flex:1;text-align:right;">70</span><span style="flex:1;text-align:right;">7.2</span><span style="flex:1;text-align:right;">5.2</span></div>
+          <div class="row" style="padding:6px 10px;font-size:8.5pt;border-top:1px solid #f3f4f6;"><span style="flex:1;">25Q2</span><span style="flex:1;text-align:right;">73</span><span style="flex:1;text-align:right;">8.1</span><span style="flex:1;text-align:right;">6.0</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="meta-panel">
+    <h3>🔌 호출 API</h3>
+    <div><span class="api-method GET">GET</span><span class="api-pill">/stocks/{ticker}/finance</span></div>
+    <h3>🧩 영역 구성</h3>
+    <ol style="padding-left:18px;">
+      <li>주요 지표 그리드 (시총/PER/PBR/EPS)</li>
+      <li>기간 선택 (분기/연간)</li>
+      <li>매출액 추이 막대 차트</li>
+      <li>분기 실적 표 (스크롤)</li>
+    </ol>
+    <h3>📊 차트</h3>
+    <ul>
+      <li>최신 분기는 강조 색 (#1a237e)</li>
+      <li>이전 분기는 단계적 그라데이션</li>
+      <li>탭 시 툴팁으로 상세 수치</li>
+    </ul>
+    <h3>🔧 옵션 파라미터</h3>
+    <table>
+      <tr><th>파라미터</th><th>값</th></tr>
+      <tr><td>period</td><td>quarterly / annual</td></tr>
+      <tr><td>count</td><td>4 / 8 / 12 / 20</td></tr>
+    </table>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     W-14. 기업 상세 - 공시
+     ============================================================ -->
+<div class="screen-page">
+  <div class="phone-wrap">
+    <div class="phone-id">W-14</div>
+    <div class="phone-title">기업 상세 — 공시 탭</div>
+    <div class="phone">
+      <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+      <div class="header"><span class="back">‹</span><span class="title">삼성전자</span><span class="right" style="color:#e53935;">♥</span></div>
+      <div style="background:#fff;padding:10px 16px;border-bottom:1px solid #f3f4f6;">
+        <span class="badge market">005930</span> <span class="price-up" style="font-size:11pt;font-weight:700;">₩72,000 ▲1.52%</span>
+      </div>
+      <div class="tabs">
+        <div class="tab">정보</div><div class="tab">뉴스</div><div class="tab">재무</div>
+        <div class="tab active">공시</div>
+        <div class="tab">분석</div>
+      </div>
+      <div class="body" style="padding:12px;">
+        <div class="chip-row">
+          <span class="chip active">전체</span>
+          <span class="chip">사업보고서</span>
+          <span class="chip">분기실적</span>
+          <span class="chip">잠정실적</span>
+          <span class="chip">수시공시</span>
+        </div>
+        <div class="card">
+          <div class="row between">
+            <div>
+              <span class="badge tag">사업보고서</span>
+              <span style="font-size:7.5pt;color:#9ca3af;">2026-01-30 18:00</span>
+            </div>
+            <span class="badge tag ok">🤖 분석 있음</span>
+          </div>
+          <div style="font-size:10pt;font-weight:700;color:#111;margin-top:6px;">2025년 사업보고서</div>
+          <div class="divider"></div>
+          <div class="row between">
+            <span style="font-size:8.5pt;color:#1a237e;font-weight:700;">분석 보고서 보기 →</span>
+            <span style="font-size:8.5pt;color:#9ca3af;">DART ↗</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="row between">
+            <div>
+              <span class="badge tag warn">잠정실적</span>
+              <span style="font-size:7.5pt;color:#9ca3af;">2026-01-15 16:00</span>
+            </div>
+            <span class="badge tag ok">🤖 분석 있음</span>
+          </div>
+          <div style="font-size:10pt;font-weight:700;color:#111;margin-top:6px;">2025년 4분기 잠정실적</div>
+        </div>
+        <div class="card">
+          <div class="row between">
+            <div>
+              <span class="badge tag" style="background:#fee2e2;color:#dc2626;">수시공시</span>
+              <span style="font-size:7.5pt;color:#9ca3af;">2026-01-08 10:30</span>
+            </div>
+          </div>
+          <div style="font-size:10pt;font-weight:700;color:#111;margin-top:6px;">단일판매·공급계약체결</div>
+          <div style="font-size:8.5pt;color:#1a237e;margin-top:4px;">DART 원문 보기 ↗</div>
+        </div>
+        <div class="card">
+          <div class="row between">
+            <div>
+              <span class="badge tag">분기실적</span>
+              <span style="font-size:7.5pt;color:#9ca3af;">2025-10-28 18:00</span>
+            </div>
+            <span class="badge tag ok">🤖 분석 있음</span>
+          </div>
+          <div style="font-size:10pt;font-weight:700;color:#111;margin-top:6px;">2025년 3분기 보고서</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="meta-panel">
+    <h3>🔌 호출 API</h3>
+    <div><span class="api-method GET">GET</span><span class="api-pill">/stocks/{ticker}/disclosures</span></div>
+    <h3>🏷 타입 필터 칩</h3>
+    <table>
+      <tr><th>type</th><th>색상</th></tr>
+      <tr><td>report (사업보고서)</td><td>파랑</td></tr>
+      <tr><td>quarterly (분기실적)</td><td>파랑</td></tr>
+      <tr><td>interim (잠정실적)</td><td>주황</td></tr>
+      <tr><td>event (수시공시)</td><td>빨강</td></tr>
+    </table>
+    <h3>🤖 분석 보고서 연결</h3>
+    <ul>
+      <li><code>has_analysis_report: true</code> → 🤖 뱃지 표시 + 탭 시 W-16</li>
+      <li><code>false</code> → DART 외부 링크만</li>
+    </ul>
+    <h3>👆 인터랙션</h3>
+    <ul>
+      <li>분석 있는 카드 탭 → W-16 보고서 상세</li>
+      <li>분석 없는 카드 탭 → 외부 브라우저(DART)</li>
+      <li>무한 스크롤 페이지네이션</li>
+    </ul>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     W-15. 기업 상세 - 분석
+     ============================================================ -->
+<div class="screen-page">
+  <div class="phone-wrap">
+    <div class="phone-id">W-15</div>
+    <div class="phone-title">기업 상세 — 분석 탭</div>
+    <div class="phone">
+      <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+      <div class="header"><span class="back">‹</span><span class="title">삼성전자</span><span class="right" style="color:#e53935;">♥</span></div>
+      <div style="background:#fff;padding:10px 16px;border-bottom:1px solid #f3f4f6;">
+        <span class="badge market">005930</span> <span class="price-up" style="font-size:11pt;font-weight:700;">₩72,000 ▲1.52%</span>
+      </div>
+      <div class="tabs">
+        <div class="tab">정보</div><div class="tab">뉴스</div><div class="tab">재무</div><div class="tab">공시</div>
+        <div class="tab active">분석</div>
+      </div>
+      <div class="body" style="padding:12px;">
+        <div class="section-title">적용 분석 모델 (운영자 정의)</div>
+        <div class="card" style="background:linear-gradient(135deg,#e8eaf6,#c5cae9);border-color:#9fa8da;">
+          <div style="font-size:11pt;font-weight:800;color:#1a237e;">📊 삼성전자 분석 모델</div>
+          <div style="font-size:8.5pt;color:#283593;margin-top:2px;">HBM 수주·메모리 가격·영업이익률 중심</div>
+          <div style="font-size:7.5pt;color:#7986cb;margin-top:6px;">평가 항목 4개 · 운영자 정의</div>
+        </div>
+        <div class="section-title" style="margin-top:14px;">분석 보고서 (최신순)</div>
+        <div class="card">
+          <div class="row tight" style="margin-bottom:4px;">
+            <span class="badge dot red"></span>
+            <span style="font-size:10pt;font-weight:800;color:#111;">2025Q4 실적 분석</span>
+          </div>
+          <div style="font-size:8.5pt;color:#374151;line-height:1.5;">"컨센서스 상회. HBM 수주 호조."</div>
+          <div class="row between" style="margin-top:6px;">
+            <span class="badge tag">기본 모델</span>
+            <span style="font-size:7.5pt;color:#9ca3af;">04/30 18:00 →</span>
+          </div>
+        </div>
+        <div class="card">
+          <div style="font-size:10pt;font-weight:700;color:#111;">2025Q3 실적 분석</div>
+          <div style="font-size:8.5pt;color:#374151;margin-top:2px;">"컨센서스 하회. 모바일 부진."</div>
+          <div class="row between" style="margin-top:6px;">
+            <span class="badge tag">기본 모델</span>
+            <span style="font-size:7.5pt;color:#9ca3af;">01/28 18:00 →</span>
+          </div>
+        </div>
+        <div class="card">
+          <div style="font-size:10pt;font-weight:700;color:#111;">2025Q2 실적 분석</div>
+          <div style="font-size:8.5pt;color:#374151;margin-top:2px;">"전년 대비 매출 성장."</div>
+          <div class="row between" style="margin-top:6px;">
+            <span class="badge tag">기본 모델</span>
+            <span style="font-size:7.5pt;color:#9ca3af;">25/07/28 →</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="meta-panel">
+    <h3>🔌 호출 API</h3>
+    <div><span class="api-method GET">GET</span><span class="api-pill">/analysis/{ticker}/reports</span></div>
+    <h3>🧩 두 영역</h3>
+    <ol style="padding-left:18px;">
+      <li><b>적용 모델 카드</b> — 그라데이션 강조, 정보 표시만 (사용자 변경 불가)</li>
+      <li><b>보고서 목록</b> — 최신순 무한 스크롤</li>
+    </ol>
+    <h3>📌 보고서 카드</h3>
+    <ul>
+      <li>● 마커 = 미확인 (read_at IS NULL)</li>
+      <li>제목, 요약, overall_score, 생성 시각</li>
+      <li>탭 → W-16 보고서 상세</li>
+    </ul>
+    <h3>🚫 모델 미정의 상태 (운영자 작업 대기)</h3>
+    <ul>
+      <li>"이 종목의 분석 모델은 준비 중입니다" placeholder 표시</li>
+      <li>보고서 목록은 비어 있음 (운영자 정의 후 첫 공시부터 보고서 생성)</li>
+      <li>v3' 변경: 사용자 모델 선택 UI 제거 (구 W-16 분석 모델 선택 모달)</li>
+    </ul>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     W-16. 분석 보고서 상세 (v3': 점수 시각화 포함)
+     ============================================================ -->
+<div class="screen-page">
+  <div class="phone-wrap">
+    <div class="phone-id">W-16</div>
+    <div class="phone-title">분석 보고서 상세</div>
+    <div class="phone">
+      <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+      <div class="header primary"><span class="back">‹</span><span class="title">분석 보고서</span><span class="right">⤴</span></div>
+      <div class="body" style="padding:0;background:#fff;">
+        <div style="padding:14px 16px;background:linear-gradient(135deg,#1a237e,#283593);color:#fff;">
+          <div style="font-size:9pt;opacity:0.85;">삼성전자 (005930)</div>
+          <div style="font-size:14pt;font-weight:800;margin-top:2px;line-height:1.3;">2025Q4 실적 분석</div>
+          <div class="row between" style="margin-top:8px;align-items:center;">
+            <div>
+              <span class="badge tag" style="background:rgba(255,255,255,0.2);color:#fff;font-size:7.5pt;">📊 삼성전자 분석 모델</span>
+              <span style="font-size:7.5pt;opacity:0.75;margin-left:4px;">2026-01-30</span>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-size:7.5pt;opacity:0.75;">종합 점수</div>
+              <div style="font-size:18pt;font-weight:900;line-height:1;">87.5</div>
+            </div>
+          </div>
+        </div>
+        <div style="padding:12px 14px;">
+          <div class="section-title" style="margin-top:0;">📊 평가 항목별 점수</div>
+          <div class="card tight" style="padding:8px 10px;">
+            <div style="font-size:8pt;color:#6b7280;margin-bottom:6px;">가중치 적용 산출 — 운영자 정의 4개 항목</div>
+            <!-- HBM 수주 (35% 가중) -->
+            <div style="margin-bottom:6px;">
+              <div class="row between" style="font-size:8pt;">
+                <span style="font-weight:700;">HBM 수주 증가율 <span style="color:#9ca3af;font-weight:400;">(35%)</span></span>
+                <span style="color:#1a237e;font-weight:800;">95 → 33.3</span>
+              </div>
+              <div style="height:5px;background:#e5e7eb;border-radius:3px;margin-top:2px;overflow:hidden;">
+                <div style="width:95%;height:100%;background:#1a237e;"></div>
+              </div>
+              <div style="font-size:7.5pt;color:#9ca3af;margin-top:2px;">전분기 대비 +42%</div>
+            </div>
+            <!-- 영업이익률 (30%) -->
+            <div style="margin-bottom:6px;">
+              <div class="row between" style="font-size:8pt;">
+                <span style="font-weight:700;">영업이익률 <span style="color:#9ca3af;font-weight:400;">(30%)</span></span>
+                <span style="color:#1a237e;font-weight:800;">88 → 26.4</span>
+              </div>
+              <div style="height:5px;background:#e5e7eb;border-radius:3px;margin-top:2px;overflow:hidden;">
+                <div style="width:88%;height:100%;background:#283593;"></div>
+              </div>
+              <div style="font-size:7.5pt;color:#9ca3af;margin-top:2px;">11.79% (YoY +1.2%p)</div>
+            </div>
+            <!-- 메모리 ASP (20%) -->
+            <div style="margin-bottom:6px;">
+              <div class="row between" style="font-size:8pt;">
+                <span style="font-weight:700;">메모리 ASP 변동 <span style="color:#9ca3af;font-weight:400;">(20%)</span></span>
+                <span style="color:#1a237e;font-weight:800;">80 → 16.0</span>
+              </div>
+              <div style="height:5px;background:#e5e7eb;border-radius:3px;margin-top:2px;overflow:hidden;">
+                <div style="width:80%;height:100%;background:#3949ab;"></div>
+              </div>
+              <div style="font-size:7.5pt;color:#9ca3af;margin-top:2px;">+5.3%</div>
+            </div>
+            <!-- 재고 회전율 (15%) -->
+            <div>
+              <div class="row between" style="font-size:8pt;">
+                <span style="font-weight:700;">재고 회전율 <span style="color:#9ca3af;font-weight:400;">(15%)</span></span>
+                <span style="color:#1a237e;font-weight:800;">79 → 11.85</span>
+              </div>
+              <div style="height:5px;background:#e5e7eb;border-radius:3px;margin-top:2px;overflow:hidden;">
+                <div style="width:79%;height:100%;background:#5c6bc0;"></div>
+              </div>
+              <div style="font-size:7.5pt;color:#9ca3af;margin-top:2px;">8.1회 (YoY -0.5)</div>
+            </div>
+          </div>
+          <div class="section-title" style="margin-top:10px;">📋 요약</div>
+          <div style="font-size:8.5pt;line-height:1.6;color:#374151;">
+            2025Q4 매출 <b>78조원</b> (YoY <span class="price-up">+8.3%</span>), 영업이익 <b>9.2조원</b>으로 컨센서스 상회.
+          </div>
+          <div class="section-title" style="margin-top:10px;">🔑 핵심 발견</div>
+          <ul style="padding-left:14px;font-size:8pt;line-height:1.5;color:#374151;">
+            <li>반도체 부문 영업이익 전분기 대비 32% 증가</li>
+            <li>HBM3E 양산 본격화로 고부가가치 매출 확대</li>
+          </ul>
+          <div class="section-title" style="margin-top:10px;">📄 원본 공시</div>
+          <div class="card tight">
+            <div style="font-size:8.5pt;font-weight:700;">2025년 사업보고서</div>
+            <div style="font-size:7.5pt;color:#9ca3af;margin-top:2px;">2026-01-30 18:00</div>
+            <div class="btn secondary sm" style="margin-top:6px;">DART 원문 보기 ↗</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="meta-panel">
+    <h3>📍 진입 경로</h3>
+    <ul>
+      <li>W-05 카드 분석 요약 영역 탭</li>
+      <li>W-15 분석 탭 보고서 카드 탭</li>
+      <li>W-14 공시 탭 카드 탭 (분석 있는 경우)</li>
+      <li>W-17 알림 카드 탭 (FCM 딥링크)</li>
+    </ul>
+    <h3>🔌 호출 API</h3>
+    <div><span class="api-method GET">GET</span><span class="api-pill">/analysis/reports/{report_id}</span></div>
+    <div class="helper">호출 시 자동 read 처리</div>
+    <h3>🧩 영역 5개 (v3' 점수 시각화 추가)</h3>
+    <ol style="padding-left:18px;">
+      <li>헤더 — 그라데이션 + 종목/제목/모델 + <b>종합 점수 (overall_score)</b></li>
+      <li><b>평가 항목별 점수 (criteria_scores)</b> — 항목명/가중치/정규화 점수/가중 점수 + 진행 막대</li>
+      <li>요약 — 단락 형태</li>
+      <li>핵심 발견 — 불릿 리스트</li>
+      <li>원본 공시 + DART 외부 링크</li>
+    </ol>
+    <h3>✅ 자동 처리</h3>
+    <ul>
+      <li>진입 시 read_at 자동 기록</li>
+      <li>폴더의 unread_disclosure_count 즉시 -1</li>
+    </ul>
+    <h3>👆 액션</h3>
+    <ul>
+      <li>⤴ 공유 — 이미지/링크</li>
+      <li>v3' 변경: "다른 모델로 다시 분석" 버튼 제거 (사용자 선택 권한 없음)</li>
+    </ul>
+    <h3>📊 점수 시각화 디자인</h3>
+    <ul>
+      <li>가중치별 막대 색상 그라데이션 (#1A237E → #5C6BC0)</li>
+      <li>각 항목: "정규화 점수 → 가중 점수" 형태로 산출 근거 노출</li>
+      <li>raw 값(예: "전분기 대비 +42%") 작게 표시</li>
+    </ul>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     W-17. 알림 목록
+     ============================================================ -->
+<div class="screen-page">
+  <div class="phone-wrap">
+    <div class="phone-id">W-17</div>
+    <div class="phone-title">알림 목록</div>
+    <div class="phone">
+      <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+      <div class="header"><span class="title" style="font-size:14pt;">알림</span><span class="right" style="font-size:9pt;">모두 읽음</span></div>
+      <div class="body">
+        <div class="chip-row">
+          <span class="chip active">전체</span>
+          <span class="chip">안 읽음 (3)</span>
+          <span class="chip">읽음</span>
+        </div>
+        <div class="section-title">오늘</div>
+        <div class="card" style="border-left:3px solid #ef4444;">
+          <div class="row tight">
+            <span class="badge dot red"></span>
+            <span style="font-size:9.5pt;font-weight:800;">📊 삼성전자</span>
+            <span style="margin-left:auto;font-size:7.5pt;color:#9ca3af;">2시간 전</span>
+          </div>
+          <div style="font-size:9pt;font-weight:700;color:#111;margin-top:4px;">새 분석 보고서</div>
+          <div style="font-size:8.5pt;color:#374151;margin-top:2px;line-height:1.4;">2025Q4 실적 분석 보고서가 생성되었습니다</div>
+        </div>
+        <div class="card" style="border-left:3px solid #ef4444;">
+          <div class="row tight">
+            <span class="badge dot red"></span>
+            <span style="font-size:9.5pt;font-weight:800;">📊 SK하이닉스</span>
+            <span style="margin-left:auto;font-size:7.5pt;color:#9ca3af;">4시간 전</span>
+          </div>
+          <div style="font-size:9pt;font-weight:700;color:#111;margin-top:4px;">새 분석 보고서</div>
+          <div style="font-size:8.5pt;color:#374151;margin-top:2px;line-height:1.4;">2025Q4 실적 분석 보고서가 생성되었습니다</div>
+        </div>
+        <div class="section-title" style="margin-top:8px;">어제</div>
+        <div class="card" style="opacity:0.65;">
+          <div class="row tight">
+            <span style="font-size:9.5pt;font-weight:600;color:#6b7280;">📊 LG에너지솔루션</span>
+            <span style="margin-left:auto;font-size:7.5pt;color:#9ca3af;">어제 18:30</span>
+          </div>
+          <div style="font-size:9pt;font-weight:600;color:#374151;margin-top:4px;">새 분석 보고서</div>
+        </div>
+        <div class="section-title" style="margin-top:8px;">이번 주</div>
+        <div class="card" style="opacity:0.65;">
+          <div class="row tight">
+            <span style="font-size:9.5pt;font-weight:600;color:#6b7280;">📊 카카오</span>
+            <span style="margin-left:auto;font-size:7.5pt;color:#9ca3af;">04/29 18:00</span>
+          </div>
+          <div style="font-size:9pt;font-weight:600;color:#374151;margin-top:4px;">새 분석 보고서</div>
+        </div>
+      </div>
+      <div class="tabbar">
+        <div class="tab"><span class="ico">🏠</span>홈</div>
+        <div class="tab"><span class="ico">🔍</span>검색</div>
+        <div class="tab active"><span class="ico">🔔</span>알림</div>
+        <div class="tab"><span class="ico">⚙️</span>설정</div>
+      </div>
+    </div>
+  </div>
+  <div class="meta-panel">
+    <h3>📍 진입 경로</h3>
+    <ul>
+      <li>하단탭 "알림"</li>
+      <li>FCM 푸시 알림 탭 (딥링크 → 곧바로 W-16)</li>
+      <li>W-04 우측 상단 종 아이콘</li>
+    </ul>
+    <h3>🔌 호출 API</h3>
+    <ul>
+      <li><span class="api-method GET">GET</span><span class="api-pill">/notifications</span></li>
+      <li><span class="api-method PATCH">PATCH</span><span class="api-pill">/notifications/{id}/read</span> (개별)</li>
+      <li><span class="api-method PATCH">PATCH</span><span class="api-pill">/notifications/read-all</span> (전체)</li>
+    </ul>
+    <h3>🎨 시각적 차별화</h3>
+    <ul>
+      <li>안 읽은 알림: 좌측 빨간 보더 + ● 마커</li>
+      <li>읽은 알림: opacity 0.65, 흐리게</li>
+      <li>시간 그룹핑: 오늘 / 어제 / 이번 주 / 이전</li>
+    </ul>
+    <h3>👆 카드 탭</h3>
+    <ul>
+      <li>read 처리 → W-16 보고서 상세 이동</li>
+      <li>좌측 스와이프 → 개별 삭제 (v3 미구현, v4 예정)</li>
+    </ul>
+    <h3>⏰ v3 알림 종류</h3>
+    <ul>
+      <li><code>disclosure_report</code> 1종</li>
+      <li>v4: 시그널 발생, 가격 임계값 등 확장 예정</li>
+    </ul>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     W-18. 설정
+     ============================================================ -->
+<div class="screen-page">
+  <div class="phone-wrap">
+    <div class="phone-id">W-18</div>
+    <div class="phone-title">설정</div>
+    <div class="phone">
+      <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+      <div class="header"><span class="title" style="font-size:14pt;">설정</span></div>
+      <div class="body">
+        <div class="section-title">계정</div>
+        <div class="card">
+          <div style="font-size:10pt;font-weight:700;">user@example.com</div>
+          <div style="font-size:8.5pt;color:#6b7280;margin-top:2px;">닉네임: 투자자_a3k9</div>
+        </div>
+        <div class="section-title" style="margin-top:8px;">알림</div>
+        <div class="card tight" style="padding:0;">
+          <div class="row between" style="padding:12px;">
+            <span style="font-size:10pt;">푸시 알림 받기</span>
+            <span class="toggle on"></span>
+          </div>
+          <div class="row between" style="padding:12px;border-top:1px solid #f3f4f6;">
+            <span style="font-size:10pt;">공시 분석 보고서 알림</span>
+            <span class="toggle on"></span>
+          </div>
+        </div>
+        <div class="section-title" style="margin-top:8px;">앱</div>
+        <div class="card tight" style="padding:0;">
+          <div class="row between" style="padding:12px;">
+            <span style="font-size:10pt;">다크 모드</span>
+            <span class="toggle"></span>
+          </div>
+          <div class="row between" style="padding:12px;border-top:1px solid #f3f4f6;">
+            <span style="font-size:10pt;">버전 정보</span>
+            <span style="font-size:9pt;color:#9ca3af;">1.0.0</span>
+          </div>
+          <div class="row between" style="padding:12px;border-top:1px solid #f3f4f6;">
+            <span style="font-size:10pt;">이용약관</span>
+            <span style="color:#9ca3af;">›</span>
+          </div>
+          <div class="row between" style="padding:12px;border-top:1px solid #f3f4f6;">
+            <span style="font-size:10pt;">개인정보 처리방침</span>
+            <span style="color:#9ca3af;">›</span>
+          </div>
+        </div>
+        <div class="btn secondary sm" style="margin-top:14px;">로그아웃</div>
+        <div class="btn danger sm">회원 탈퇴</div>
+      </div>
+      <div class="tabbar">
+        <div class="tab"><span class="ico">🏠</span>홈</div>
+        <div class="tab"><span class="ico">🔍</span>검색</div>
+        <div class="tab"><span class="ico">🔔</span>알림</div>
+        <div class="tab active"><span class="ico">⚙️</span>설정</div>
+      </div>
+    </div>
+  </div>
+  <div class="meta-panel">
+    <h3>🔌 호출 API</h3>
+    <ul>
+      <li><span class="api-method POST">POST</span><span class="api-pill">/auth/logout</span></li>
+      <li><span class="api-method DELETE">DELETE</span><span class="api-pill">/auth/account</span></li>
+      <li><span class="api-method DELETE">DELETE</span><span class="api-pill">/notifications/fcm-token</span></li>
+    </ul>
+    <h3>🎚 알림 토글 정책</h3>
+    <ul>
+      <li>"푸시 알림 받기" OFF → FCM 토큰 삭제</li>
+      <li>"공시 보고서 알림" OFF → 클라이언트 필터 (FCM은 유지)</li>
+      <li>v3는 1종, v4부터 알림 종류별 토글 추가</li>
+    </ul>
+    <h3>🔓 로그아웃</h3>
+    <ol style="padding-left:18px;">
+      <li>다이얼로그 "로그아웃 하시겠어요?"</li>
+      <li>POST /auth/logout (refresh_token 무효화)</li>
+      <li>DELETE /notifications/fcm-token</li>
+      <li>로컬 토큰 삭제</li>
+      <li>W-02로 이동</li>
+    </ol>
+    <h3>⚠️ 회원 탈퇴 (3단계 확인)</h3>
+    <ol style="padding-left:18px;">
+      <li>경고 다이얼로그 — "모든 데이터 삭제됨"</li>
+      <li>비밀번호 재확인</li>
+      <li>최종 확인 → DELETE /auth/account → W-02</li>
+    </ol>
+  </div>
+</div>
+
+</body>
+</html>

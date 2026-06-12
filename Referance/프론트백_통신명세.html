@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>프론트-백 통신 명세 · 공시 분석 서비스</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.min.css">
+<style>
+:root {
+  --primary: #1A237E;
+  --primary-light: #3949AB;
+  --accent: #4A90D9;
+  --success: #16A34A;
+  --danger: #DC2626;
+  --warning: #F59E0B;
+  --bg: #F5F7FA;
+  --surface: #FFFFFF;
+  --border: #E0E0E0;
+  --text: #1A1A1A;
+  --text-sub: #6B7280;
+  --code-bg: #0F172A;
+  --code-text: #E2E8F0;
+  --tag-get: #16A34A;
+  --tag-post: #2563EB;
+  --tag-patch: #D97706;
+  --tag-put: #7C3AED;
+  --tag-delete: #DC2626;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: 100vh;
+}
+
+aside {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 24px 16px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+aside .brand {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+
+aside .subtitle {
+  font-size: 12px;
+  color: var(--text-sub);
+  margin-bottom: 24px;
+}
+
+aside nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+aside nav > ul > li {
+  margin-bottom: 4px;
+}
+
+aside nav .nav-section {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-sub);
+  letter-spacing: 0.5px;
+  padding: 12px 8px 4px;
+}
+
+aside nav a {
+  display: block;
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.15s;
+}
+
+aside nav a:hover {
+  background: var(--bg);
+  color: var(--primary);
+}
+
+aside nav a .wid {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-right: 6px;
+  min-width: 32px;
+}
+
+main {
+  padding: 40px 56px;
+  max-width: 1100px;
+}
+
+h1 {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--primary);
+  margin: 0 0 8px;
+}
+
+.meta-bar {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 32px;
+  padding: 16px 20px;
+  background: var(--surface);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+
+.meta-bar .meta-item {
+  font-size: 13px;
+}
+
+.meta-bar .meta-item .label {
+  color: var(--text-sub);
+  margin-right: 6px;
+}
+
+.meta-bar .meta-item .value {
+  font-weight: 600;
+  color: var(--text);
+}
+
+section {
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 32px 36px;
+  margin-bottom: 24px;
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+section h2 {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+section h2 .wid-badge {
+  background: var(--primary);
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+section h2 .icon {
+  font-size: 22px;
+}
+
+section .section-desc {
+  color: var(--text-sub);
+  font-size: 14px;
+  margin-bottom: 28px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 28px 0 12px;
+  color: var(--text);
+  padding-left: 12px;
+  border-left: 4px solid var(--accent);
+}
+
+h4 {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 20px 0 10px;
+  color: var(--primary-light);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0 20px;
+  font-size: 13px;
+  background: var(--surface);
+}
+
+table th {
+  background: #F8FAFC;
+  color: var(--text);
+  font-weight: 600;
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 2px solid var(--border);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+table tr:last-child td { border-bottom: none; }
+
+table code {
+  background: #F1F5F9;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: 'Menlo', 'Consolas', monospace;
+  color: var(--primary);
+}
+
+pre {
+  background: var(--code-bg);
+  color: var(--code-text);
+  padding: 18px 20px;
+  border-radius: 10px;
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 12px 0 20px;
+  font-family: 'Menlo', 'Consolas', 'Monaco', monospace;
+}
+
+pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+}
+
+.json .key   { color: #93C5FD; }
+.json .str   { color: #86EFAC; }
+.json .num   { color: #FCA5A5; }
+.json .bool  { color: #FBBF24; }
+.json .null  { color: #94A3B8; font-style: italic; }
+.json .punc  { color: #CBD5E1; }
+.json .cmt   { color: #64748B; font-style: italic; }
+
+.method {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  color: white;
+  font-family: 'Menlo', monospace;
+  letter-spacing: 0.3px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.method.GET    { background: var(--tag-get); }
+.method.POST   { background: var(--tag-post); }
+.method.PATCH  { background: var(--tag-patch); }
+.method.PUT    { background: var(--tag-put); }
+.method.DELETE { background: var(--tag-delete); }
+
+.endpoint {
+  font-family: 'Menlo', monospace;
+  font-size: 13px;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.api-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: #F8FAFC;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  border-left: 3px solid var(--accent);
+}
+
+.callout {
+  padding: 14px 18px;
+  border-radius: 10px;
+  margin: 16px 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+
+.callout.info {
+  background: #EFF6FF;
+  border-left: 4px solid var(--accent);
+  color: #1E40AF;
+}
+
+.callout.warn {
+  background: #FFFBEB;
+  border-left: 4px solid var(--warning);
+  color: #92400E;
+}
+
+.callout.note {
+  background: #F0FDF4;
+  border-left: 4px solid var(--success);
+  color: #166534;
+}
+
+.flow-box {
+  background: #0F172A;
+  color: #CBD5E1;
+  padding: 18px 22px;
+  border-radius: 10px;
+  font-family: 'Menlo', monospace;
+  font-size: 12.5px;
+  line-height: 1.7;
+  margin: 14px 0;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.flow-box .arr  { color: #93C5FD; }
+.flow-box .ok   { color: #86EFAC; }
+.flow-box .err  { color: #FCA5A5; }
+.flow-box .step { color: #FCD34D; }
+
+.color-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.color-swatch {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: white;
+  font-family: 'Menlo', monospace;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.matrix-table th:first-child { width: 200px; }
+.matrix-table code {
+  display: inline-block;
+  margin: 1px 0;
+}
+
+.toc-cta {
+  margin-top: 24px;
+  padding: 12px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  border-radius: 10px;
+  color: white;
+  font-size: 12px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  aside { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+  main { padding: 24px 20px; }
+  section { padding: 22px 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+<aside>
+  <div class="brand">공시 분석 API</div>
+  <div class="subtitle">프론트-백 통신 명세 v1</div>
+
+  <nav>
+    <ul>
+      <li><a href="#common"><span class="wid">📐</span>공통 통신 규약</a></li>
+      <li class="nav-section">인증</li>
+      <li><a href="#w02"><span class="wid">W-02</span>로그인</a></li>
+      <li><a href="#w03"><span class="wid">W-03</span>회원가입</a></li>
+      <li class="nav-section">마이페이지</li>
+      <li><a href="#w04"><span class="wid">W-04</span>폴더 목록(홈)</a></li>
+      <li><a href="#w05"><span class="wid">W-05</span>폴더 상세</a></li>
+      <li><a href="#w06"><span class="wid">W-06</span>폴더 생성/편집</a></li>
+      <li class="nav-section">분석 · 알림</li>
+      <li><a href="#w15"><span class="wid">W-15</span>분석 탭</a></li>
+      <li><a href="#w16"><span class="wid">W-16</span>보고서 상세</a></li>
+      <li><a href="#w17"><span class="wid">W-17</span>알림 목록</a></li>
+      <li class="nav-section">요약</li>
+      <li><a href="#matrix"><span class="wid">📋</span>API 매트릭스</a></li>
+    </ul>
+  </nav>
+
+  <div class="toc-cta">
+    기준 문서<br>
+    <strong>와이어프레임_visual.pdf</strong><br>
+    API명세서_v3.md
+  </div>
+</aside>
+
+<main>
+
+<h1>프론트-백 통신 명세서</h1>
+
+<div class="meta-bar">
+  <div class="meta-item"><span class="label">서비스</span><span class="value">공시 분석 &amp; 기업 정보 앱</span></div>
+  <div class="meta-item"><span class="label">대상 화면</span><span class="value">W-02 / 03 / 04 / 05 / 06 / 15 / 16 / 17</span></div>
+  <div class="meta-item"><span class="label">버전</span><span class="value">v4 (ThemeSense)</span></div>
+  <div class="meta-item"><span class="label">작성일</span><span class="value">2026-05-13</span></div>
+</div>
+
+<!-- ============ 공통 통신 규약 ============ -->
+<section id="common">
+  <h2><span class="icon">📐</span> 공통 통신 규약</h2>
+  <div class="section-desc">모든 화면이 공유하는 기본 규약. 각 화면 명세 전 반드시 적용.</div>
+
+  <h3>Base URL · 헤더</h3>
+  <pre><span class="cmt">// 모든 요청 공통</span>
+Base URL : http://api.{domain}/v1
+인증 헤더 : Authorization: Bearer {access_token}
+Content-Type : application/json; charset=utf-8
+Accept-Language : ko-KR</pre>
+
+  <div class="callout info">
+    <strong>인증 불필요 API</strong> · <code>POST /auth/signup</code>, <code>POST /auth/login</code>,
+    <code>POST /auth/refresh</code>, <code>GET /auth/check-email</code> — 그 외 모두 <code>Authorization</code> 필수.
+  </div>
+
+  <h3>공통 응답 포맷</h3>
+  <h4>성공</h4>
+<pre class="json">{
+  <span class="key">"status"</span><span class="punc">:</span> <span class="str">"success"</span><span class="punc">,</span>
+  <span class="key">"data"</span><span class="punc">:</span> <span class="punc">{</span> ... <span class="punc">}</span><span class="punc">,</span>
+  <span class="key">"message"</span><span class="punc">:</span> <span class="str">"요청이 성공적으로 처리되었습니다"</span>
+<span class="punc">}</span></pre>
+
+  <h4>실패</h4>
+<pre class="json">{
+  <span class="key">"status"</span><span class="punc">:</span> <span class="str">"error"</span><span class="punc">,</span>
+  <span class="key">"error"</span><span class="punc">:</span> <span class="punc">{</span>
+    <span class="key">"code"</span><span class="punc">:</span> <span class="str">"AUTH_INVALID"</span><span class="punc">,</span>
+    <span class="key">"message"</span><span class="punc">:</span> <span class="str">"이메일 또는 비밀번호가 일치하지 않습니다"</span>
+  <span class="punc">}</span>
+<span class="punc">}</span></pre>
+
+  <h3>공통 에러 코드</h3>
+  <table>
+    <thead><tr><th>HTTP</th><th>code</th><th>처리 가이드</th></tr></thead>
+    <tbody>
+      <tr><td>400</td><td><code>INVALID_PARAM</code></td><td>인라인 필드 에러 표시</td></tr>
+      <tr><td>401</td><td><code>AUTH_EXPIRED</code></td><td><code>/auth/refresh</code> 자동 호출 → 원 요청 1회 재시도</td></tr>
+      <tr><td>401</td><td><code>AUTH_INVALID</code></td><td>토큰 폐기 → W-02로 강제 이동</td></tr>
+      <tr><td>403</td><td><code>FORBIDDEN</code></td><td>토스트 "권한이 없습니다"</td></tr>
+      <tr><td>404</td><td><code>NOT_FOUND</code></td><td>화면별 빈 상태 처리</td></tr>
+      <tr><td>409</td><td><code>DUPLICATE</code></td><td>인라인 에러 (예: 이메일 중복)</td></tr>
+      <tr><td>429</td><td><code>RATE_LIMIT</code></td><td>토스트 "잠시 후 다시 시도해주세요"</td></tr>
+      <tr><td>500</td><td><code>INTERNAL_ERROR</code></td><td>토스트 + Sentry 보고</td></tr>
+    </tbody>
+  </table>
+
+  <h3>토큰 라이프사이클</h3>
+<div class="flow-box"><span class="step">[401 AUTH_EXPIRED 감지]</span>
+  <span class="arr">→</span> POST /auth/refresh (refresh_token)
+      ├ <span class="ok">200</span> <span class="arr">→</span> access_token 갱신 + 원 요청 재시도(1회만)
+      └ <span class="err">401</span> <span class="arr">→</span> 토큰 모두 삭제 <span class="arr">→</span> W-02 이동</div>
+
+  <h3>날짜 · 페이지네이션 규약</h3>
+  <ul>
+    <li><strong>날짜/시간</strong> : ISO 8601 UTC (<code>2026-05-13T10:00:00Z</code>)</li>
+    <li><strong>페이지네이션</strong> : <code>?page=1&amp;size=20</code> · 응답에 <code>pagination</code> 객체 포함</li>
+  </ul>
+</section>
+
+
+<!-- ============ W-02 로그인 ============ -->
+<section id="w02">
+  <h2><span class="wid-badge">W-02</span><span class="icon">🔐</span> 로그인</h2>
+  <div class="section-desc">이메일 / 비밀번호 입력 → 토큰 발급 + FCM 등록 → W-04 이동.</div>
+
+  <h3>호출 API</h3>
+  <div class="api-row"><span class="method POST">POST</span><span class="endpoint">/auth/login</span> · "로그인" 버튼</div>
+  <div class="api-row"><span class="method POST">POST</span><span class="endpoint">/notifications/fcm-token</span> · 로그인 성공 후 백그라운드</div>
+
+  <h3>1. <span class="method POST">POST</span> /auth/login</h3>
+  <h4>Request Body</h4>
+<pre class="json">{
+  <span class="key">"email"</span><span class="punc">:</span> <span class="str">"user@example.com"</span><span class="punc">,</span>
+  <span class="key">"password"</span><span class="punc">:</span> <span class="str">"abcd1234!"</span>
+<span class="punc">}</span></pre>
+
+  <h4>Response 200</h4>
+<pre class="json">{
+  <span class="key">"status"</span><span class="punc">:</span> <span class="str">"success"</span><span class="punc">,</span>
+  <span class="key">"data"</span><span class="punc">:</span> <span class="punc">{</span>
+    <span class="key">"access_token"</span><span class="punc">:</span> <span class="str">"eyJhbGc..."</span><span class="punc">,</span>
+    <span class="key">"refresh_token"</span><span class="punc">:</span> <span class="str">"dGhpcyBpcy..."</span><span class="punc">,</span>
+    <span class="key">"token_type"</span><span class="punc">:</span> <span class="str">"Bearer"</span><span class="punc">,</span>
+    <span class="key">"expires_in"</span><span class="punc">:</span> <span class="num">3600</span><span class="punc">,</span>
+    <span class="key">"user"</span><span class="punc">:</span> <span class="punc">{</span>
+      <span class="key">"id"</span><span class="punc">:</span> <span class="num">1</span><span class="punc">,</span>
+      <span class="key">"email"</span><span class="punc">:</span> <span class="str">"user@example.com"</span><span class="punc">,</span>
+      <span class="key">"nickname"</span><span class="punc">:</span> <span class="str">"투자자_a3k9"</span>
+    <span class="punc">}</span>
+  <span class="punc">}</span>
+<span class="punc">}</span></pre>
+
+  <h4>Error</h4>
+  <table>
+    <thead><tr><th>상황</th><th>HTTP</th><th>code</th><th>UI</th></tr></thead>
+    <tbody>
+      <tr><td>비밀번호 불일치</td><td>401</td><td><code>AUTH_INVALID</code></td><td>인라인: "이메일 또는 비밀번호가 일치하지 않습니다"</td></tr>
+      <tr><td>형식 오류</td><td>400</td><td><code>INVALID_PARAM</code></td><td>필드별 인라인</td></tr>
+      <tr><td>네트워크 실패</td><td>—</td><td>—</td><td>토스트: "네트워크 연결을 확인해주세요"</td></tr>
+    </tbody>
+  </table>
+
+  <h3>2. <span class="method POST">POST</span> /notifications/fcm-token</h3>
+  <h4>Request Body</h4>
+<pre class="json">{
+  <span class="key">"device_token"</span><span class="punc">:</span> <span class="str">"fcm-device-token-string"</span><span class="punc">,</span>
+  <span class="key">"platform"</span><span class="punc">:</span> <span class="str">"ios"</span>
+<span class="punc">}</span></pre>
+
+  <h4>Response 200</h4>
+<pre class="json">{ <span class="key">"status"</span><span class="punc">:</span> <span class="str">"success"</span><span class="punc">,</span> <span class="key">"message"</span><span class="punc">:</span> <span class="str">"디바이스 토큰이 등록되었습니다"</span> <span class="punc">}</span></pre>
+
+  <h3>프론트 처리 흐름</h3>
+<div class="flow-box"><span class="step">[로그인 버튼]</span>
+  <span class="arr">→</span> POST /auth/login
+     ├ <span class="ok">200</span> <span class="arr">→</span> access_token + refresh_token 보안 저장 (Keychain / EncryptedSharedPreferences)
+     │       <span class="arr">→</span> FCM SDK에서 device_token 조회
+     │       <span class="arr">→</span> POST /notifications/fcm-token  (백그라운드 · 실패해도 진행)
+     │       <span class="arr">→</span> W-04로 이동
+     └ <span class="err">401</span> <span class="arr">→</span> 인라인 에러 표시</div>
+</section>
+
+
+<!-- ============ W-03 회원가입 ============ -->
+<section id="w03">
+  <h2><span class="wid-badge">W-03</span><span class="icon">📝</span> 회원가입</h2>
+  <div class="section-desc">이메일 중복 체크 → 비밀번호/약관 검증 → 가입 완료 → W-02로 복귀.</div>
+
+  <h3>호출 API</h3>
+  <div class="api-row"><span class="method GET">GET</span><span class="endpoint">/auth/check-email</span> · 이메일 blur (debounce 500ms)</div>
+  <div class="api-row"><span class="method POST">POST</span><span class="endpoint">/auth/signup</span> · "가입하기" 버튼</div>
+
+  <h3>1. <span class="method GET">GET</span> /auth/check-email</h3>
+  <h4>Request</h4>
+<pre>GET /auth/check-email?email=user@example.com</pre>
+
+  <h4>Response — 사용 가능</h4>
+<pre class="json">{ <span class="key">"status"</span><span class="punc">:</span> <span class="str">"success"</span><span class="punc">,</span> <span class="key">"data"</span><span class="punc">:</span> <span class="punc">{</span> <span class="key">"available"</span><span class="punc">:</span> <span class="bool">true</span> <span class="punc">}</span> <span class="punc">}</span></pre>
+
+  <h4>Response — 이미 가입</h4>
+<pre class="json">{
+  <span class="key">"status"</span><span class="punc">:</span> <span class="str">"success"</span><span class="punc">,</span>
+  <span class="key">"data"</span><span class="punc">:</span> <span class="punc">{</span> <span class="key">"available"</span><span class="punc">:</span> <span class="bool">false</span><span class="punc">,</span> <span class="key">"message"</span><span class="punc">:</span> <span class="str">"이미 가입된 이메일입니다"</span> <span class="punc">}</span>
+<span class="punc">}</span></pre>
+
+  <h3>2. <span class="method POST">POST</span> /auth/signup</h3>
+  <h4>Request Body</h4>
+<pre class="json">{
+  <span class="key">"email"</span><span class="punc">:</span> <span class="str">"user@example.com"</span><span class="punc">,</span>
+  <span class="key">"password"</span><span class="punc">:</span> <span class="str">"abcd1234!"</span><span class="punc">,</span>
+  <span class="key">"nickname"</span><span class="punc">:</span> <span class="str">"투자자_홍길동"</span><span class="punc">,</span>          <span class="cmt">// optional · 미입력 시 서버 자동 생성</span>
+  <span class="key">"terms_agreed"</span><span class="punc">:</span> <span class="bool">true</span><span class="punc">,</span>
+  <span class="key">"privacy_agreed"</span><span class="punc">:</span> <span class="bool">true</span><span class="punc">,</span>
+  <span class="key">"marketing_agreed"</span><span class="punc">:</span> <span class="bool">false</span>
+<span class="punc">}</span></pre>
+
+  <h4>Response 201</h4>
+<pre class="json">{
+  <span class="key">"status"</span><span class="punc">:</span> <span class="str">"success"</span><span class="punc">,</span>
+  <span class="key">"data"</span><span class="punc">:</span> <span class="punc">{</span>
+    <span class="key">"user_id"</span><span class="punc">:</span> <span class="num">1</span><span class="punc">,</span>
+    <span class="key">"email"</span><span class="punc">:</span> <span class="str">"user@example.com"</span><span class="punc">,</span>
+    <span class="key">"nickname"</span><span class="punc">:</span> <span class="str">"투자자_a3k9"</span><span class="punc">,</span>
+    <span class="key">"created_at"</span><span class="punc">:</span> <span class="str">"2026-05-13T10:00:00Z"</span>
+  <span class="punc">}</span><span class="punc">,</span>
+  <span class="key">"message"</span><span class="punc">:</span> <span class="str">"회원가입이 완료되었습니다"</span>
+<span class="punc">}</span></pre>
+
+  <h4>Error</h4>
+  <table>
+    <thead><tr><th>상황</th><th>HTTP</th><th>code</th><th>UI</th></tr></thead>
+    <tbody>
+      <tr><td>이메일 형식 오류</td><td>400</td><td><code>INVALID_PARAM</code> field=email</td><td>인라인</td></tr>
+      <tr><td>비밀번호 규칙 (영문+숫자 8자↑)</td><td>400</td><td><code>INVALID_PARAM</code> field=password</td><td>인라인</td></tr>
+      <tr><td>비밀번호 확인 불일치</td><td>—</td><td>클라이언트 검증</td><td>인라인</td></tr>
+      <tr><td>이메일 중복</td><td>409</td><td><code>DUPLICATE</code></td><td>"이미 가입된 이메일입니다"</td></tr>
+      <tr><td>필수 약관 미동의</td><td>—</td><td>클라이언트 검증</td><td>가입 버튼 비활성화</td></tr>
+    </tbody>
+  </table>
+
+  <h3>프론트 처리 흐름</h3>
+<div class="flow-box"><span class="step">[이메일 입력 → blur]</span>
+  <span class="arr">→</span> debounce 500ms
+  <span class="arr">→</span> GET /auth/check-email?email=
+     ├ available:<span class="ok">true</span>  <span class="arr">→</span> ✓ 사용가능 (초록)
+     └ available:<span class="err">false</span> <span class="arr">→</span> ✗ 이미 가입됨 (빨강)
+
+<span class="step">[가입 버튼]</span>
+  <span class="arr">→</span> 클라이언트 검증 (비밀번호 강도 · 일치 · 약관)
+  <span class="arr">→</span> POST /auth/signup
+     ├ <span class="ok">201</span> <span class="arr">→</span> 토스트 "가입 완료" <span class="arr">→</span> W-02로 이동 (자동 로그인 X)
+     └ <span class="err">4xx</span> <span class="arr">→</span> 에러 매핑</div>
+</section>
+
+
+<!-- ============ W-04 폴더 목록 ============ -->
+<section id="w04">
+  <h2><span class="wid-badge">W-04</span><span class="icon">🏠</span> 마이페이지 — 폴더 목록 (홈)</h2>
+  <div class="section-desc">로그인 후 메인. 폴더 카드 그리드 · 미확인 배지 · 순서 편집 · 카드 컨텍스트 메뉴.</div>
+
+  <h3>호출 API</h3>
+  <div class="api-row"><span class="method GET">GET</span><span class="endpoint">/folders</span> · 진입 / pull-to-refresh</div>
+  <div class="api-row"><span class="method PUT">PUT</span><span class="endpoint">/folders/order</span> · 순서 편집 저장</div>
+  <div class="api-row"><span class="method DELETE">DELETE</span><span class="endpoint">/folders/{id}</span> · 카드 길게 누르기 → 삭제</div>
+
+  <h3>1. <span class="method GET">GET</span> /folders</h3>
+  <h4>Response 200</h4>
+<pre class="json">{
+  <span class="key">"status"</span><span class="punc">:</span> <span class="str">"success"</span><span class="punc">,</span>
+  <span class="key">"data"</span><span class="punc">:</span> <span class="punc">{</span>
+    <span class="key">"folders"</span><span class="punc">:</span> <span class="punc">[</span>
+      <span class="punc">{</span>
+        <span class="key">"id"</span><span class="punc">:</span> <span class="num">0</span><span class="punc">,</span>
+        <span class="key">"name"</span><span class="punc">:</span> <span class="str">"기본 폴더"</span><span class="punc">,</span>
+        <span class="key">"color"</span><span class="punc">:</span> <span class="str">"#999999"</span><span class="punc">,</span>
+        <span class="key">"type"</span><span class="punc">:</span> <span class="str">"default"</span><span class="punc">,</span>
+        <span class="key">"item_count"</span><span class="punc">:</span> <span class="num">5</span><span class="punc">,</span>
+        <span class="key">"unread_disclosure_count"</span><span class="punc">:</span> <span class="num">1</span><span class="punc">,</span>
+        <span class="key">"order"</span><span class="punc">:</span> <span class="num">0</span><span class="punc">,</span>
+        <span class="key">"created_at"</span><span class="punc">:</span> <span class="str">"2026-02-20T09:00:00Z"</span>
+      <span class="punc">}</span><span class="punc">,</span>
+      <span class="punc">{</span>
+        <span class="key">"id"</span><span class="punc">:</span> <span class="num">1</span><span class="punc">,</span>
+        <span class="key">"name"</span><span class="punc">:</span> <span class="str">"반도체 관련주"</span><span class="punc">,</span>
+        <span class="key">"color"</span><span class="punc">:</span> <span class="str">"#4A90D9"</span><span class="punc">,</span>
+        <span class="key">"type"</span><span class="punc">:</span> <span class="str">"custom"</span><span class="punc">,</span>
+        <span class="key">"item_count"</span><span class="punc">:</span> <span class="num">8</span><span class="punc">,</span>
+        <span class="key">"unread_disclosure_count"</span><span class="punc">:</span> <span class="num">3</span><span class="punc">,</span>
+        <span class="key">"order"</span><span class="punc">:</span> <span class="num">1</span><span class="punc">,</span>
+        <span class="key">"created_at"</span><span class="punc">:</span> <span class="str">"2026-03-01T10:00:00Z"</span>
+      <span class="punc">}</span>
+    <span class="punc">]</span><span class="punc">,</span>
+    <span class="key">"total_unread_count"</span><span class="punc">:</span> <span class="num">4</span>
+  <span class="punc">}</span>
+<span class="punc">}</span></pre>
+
+  <div class="callout info">
+    <strong>UI 매핑</strong> ·
+    <code>total_unread_count</code> → 우측 상단 🔔 종 배지 ·
+    <code>unread_disclosure_count</code> → 각 카드 우측 ●N 배지 (Warning <code>#EF4444</code>)
+  </div>
+
+  <h3>2. <span class="method PUT">PUT</span> /folders/order</h3>
+  <h4>Request Body</h4>
+<pre class="json">{ <span class="key">"folder_ids"</span><span class="punc">:</span> <span class="punc">[</span><span class="num">0</span><span class="punc">,</span> <span class="num">2</span><span class="punc">,</span> <span class="num">1</span><span class="punc">,</span> <span class="num">3</span><span class="punc">]</span> <span class="punc">}</span></pre>
+
+  <h4>Response 200</h4>
+<pre class="json">{ <span class="key">"status"</span><span class="punc">:</span> <span class="str">"success"</span><span class="punc">,</span> <span class="key">"message"</span><span class="punc">:</span> <span class="str">"폴더 순서가 변경되었습니다"</span> <span class="punc">}</span></pre>
+
+  <h3>3. <span class="method DELETE">DELETE</span> /folders/{folder_id}</h3>
+  <h4>Response 200</h4>
+<pre class="json">{ <span class="key">"status"</span><span class="punc">:</span> <span class="str">"success"</span><span class="punc">,</span> <span class="key">"message"</span><span class="punc">:</span> <span class="str">"폴더와 내부 관심 종목이 모두 삭제되었습니다"</span> <span class="punc">}</span></pre>
+
+  <h4>Error</h4>
+  <table>
+    <thead><tr><th>상황</th><th>HTTP</th><th>code</th></tr></thead>
+    <tbody><tr><td>기본 폴더 삭제 시도</td><td>403</td><td><code>FORBIDDEN</code></td></tr></tbody>
+  </table>
+
+  <h3>프론트 처리 흐름</h3>
+<div class="flow-box"><span class="step">[화면 진입]</span>
+  <span class="arr">→</span> GET /folders
+  <span class="arr">→</span> folders[] order 오름차순 렌더링
+  <span class="arr">→</span> unread_disclosure_count &gt; 0 인 카드에 ●N 배지
+  <span class="arr">→</span> total_unread_count 를 우측 상단 🔔 배지
+
+<span class="step">[+ 새 폴더]</span>      <span class="arr">→</span> W-06 (생성 모드)
+<span class="step">[순서 편집]</span>
+  <span class="arr">→</span> 드래그 앤 드롭 활성화
+  <span class="arr">→</span> 저장 <span class="arr">→</span> PUT /folders/order
+  <span class="arr">→</span> <span class="ok">200</span> <span class="arr">→</span> GET /folders 재조회
+
+<span class="step">[카드 길게 누르기]</span>
+  <span class="arr">→</span> 컨텍스트 메뉴 (이름 수정 / 색상 변경 / 삭제)
+  <span class="arr">→</span> 삭제 선택 <span class="arr">→</span> 확인 다이얼로그 <span class="arr">→</span> DELETE /folders/{id}</div>
+</section>
+
+
+<!-- ============ W-05 폴더 상세 ============ -->
+<section id="w05">
+  <h2><span class="wid-badge">W-05</span><span class="icon">📁</span> 폴더 상세 — 종목 리스트</h2>
+  <div class="section-desc">선택한 폴더 안의 종목들을 카드로 표시. 시세 · 메모/평단가 · 분석 요약 4영역.</div>
+
+  <h3>호출 API</h3>
+  <div class="api-row"><span class="method GET">GET</span><span class="endpoint">/folders/{id}/items</span> · 진입</div>
+  <div class="api-row"><span class="method DELETE">DELETE</span><span class="endpoint">/folders/items/{item_id}</span> · 카드 좌측 스와이프 "삭제"</div>
+  <div class="api-row"><span class="method PUT">PUT</span><span class="endpoint">/folders/items/move</span> · 카드 좌측 스와이프 "이동" (W-10 거쳐)</div>
+
+  <h3>1. <span class="method GET">GET</span> /folders/{folder_id}/items</h3>
+  <h4>Response 200</h4>
+<pre class="json">{
+  <span class="key">"status"</span><span class="punc">:</span> <span class="str">"success"</span><span class="punc">,</span>
+  <span class="key">"data"</span><span class="punc">:</span> <span class="punc">{</span>
+    <span class="key">"folder"</span><span class="punc">:</span> <span class="punc">{</span> <span class="key">"id"</span><span class="punc">:</span> <span class="num">1</span><span class="punc">,</span> <span class="key">"name"</span><span class="punc">:</span> <span class="str">"반도체 관련주"</span><span class="punc">,</span> <span class="key">"color"</span><span class="punc">:</span> <span class="str">"#4A90D9"</span><span class="punc">,</span> <span class="key">"type"</span><span class="punc">:</span> <span class="str">"custom"</span> <span class="punc">}</span><span class="punc">,</span>
+    <span class="key">"items"</span><span class="punc">:</span> <span class="punc">[</span>
+      <span class="punc">{</span>
+        <span class="key">"id"</span><span class="punc">:</span> <span class="num">101</span><span class="punc">,</span>
+        <span class="key">"ticker"</span><span class="punc">:</span> <span class="str">"005930"</span><span class="punc">,</span>
+        <span class="key">"name"</span><span class="punc">:</span> <span class="str">"삼성전자"</span><span class="punc">,</span>
+        <span class="key">"current_price"</span><span class="punc">:</span> <span class="num">72000</span><span class="punc">,</span>
+        <span class="key">"change_rate"</span><span class="punc">:</span> <span class="num">1.52</span><span class="punc">,</span>
+        <span class="key">"change_amount"</span><span class="punc">:</span> <span class="num">1100</span><span class="punc">,</span>
+        <span class="key">"memo"</span><span class="punc">:</span> <span class="str">"3분기 실적 주목"</span><span class="punc">,</span>
+        <span class="key">"avg_price"</span><span class="punc">:</span> <span class="num">68000</span><span class="punc">,</span>
+        <span class="key">"unread_disclosure_count"</span><span class="punc">:</span> <span class="num">2</span><span class="punc">,</span>
+        <span class="key">"analysis_summary"</span><span class="punc">:</span> <span class="punc">{</span>
+          <span class="key">"has_theme"</span><span class="punc">:</span> <span class="bool">true</span><span class="punc">,</span>
+          <span class="key">"applied_theme"</span><span class="punc">:</span> <span class="punc">{</span> <span class="key">"id"</span><span class="punc">:</span> <span class="num">1</span><span class="punc">,</span> <span class="key">"name"</span><span class="punc">:</span> <span class="str">"HBM/메모리"</span> <span class="punc">}</span><span class="punc">,</span>
+          <span class="key">"latest_report_id"</span><span class="punc">:</span> <span class="num">501</span><span class="punc">,</span>
+          <span class="key">"expected_car"</span><span class="punc">:</span> <span class="num">6.8</span><span class="punc">,</span>
+          <span class="key">"summary"</span><span class="punc">:</span> <span class="str">"영업이익률 +1.2%p, HBM 수주 호조."</span><span class="punc">,</span>
+          <span class="key">"generated_at"</span><span class="punc">:</span> <span class="str">"2026-04-30T18:00:00Z"</span>
+        <span class="punc">}</span><span class="punc">,</span>
+        <span class="key">"added_at"</span><span class="punc">:</span> <span class="str">"2026-03-15T09:30:00Z"</span>
+      <span class="punc">}</span><span class="punc">,</span>
+      <span class="punc">{</span>
+        <span class="key">"id"</span><span class="punc">:</span> <span class="num">102</span><span class="punc">,</span>
+        <span class="key">"ticker"</span><span class="punc">:</span> <span class="str">"000660"</span><span class="punc">,</span>
+        <span class="key">"name"</span><span class="punc">:</span> <span class="str">"SK하이닉스"</span><span class="punc">,</span>
+        <span class="key">"current_price"</span><span class="punc">:</span> <span class="num">185000</span><span class="punc">,</span>
+        <span class="key">"change_rate"</span><span class="punc">:</span> <span class="num">-0.81</span><span class="punc">,</span>
+        <span class="key">"change_amount"</span><span class="punc">:</span> <span class="num">-1500</span><span class="punc">,</span>
+        <span class="key">"memo"</span><span class="punc">:</span> <span class="null">null</span><span class="punc">,</span>
+        <span class="key">"avg_price"</span><span class="punc">:</span> <span class="null">null</span><span class="punc">,</span>
+        <span class="key">"unread_disclosure_count"</span><span class="punc">:</span> <span class="num">0</span><span class="punc">,</span>
+        <span class="key">"analysis_summary"</span><span class="punc">:</span> <span class="punc">{</span>
+          <span class="key">"has_theme"</span><span class="punc">:</span> <span class="bool">false</span><span class="punc">,</span>
+          <span class="key">"message"</span><span class="punc">:</span> <span class="str">"ThemeSense 학습 universe 외 종목 — 테마 분류 대기 중"</span>
+        <span class="punc">}</span><span class="punc">,</span>
+        <span class="key">"added_at"</span><span class="punc">:</span> <span class="str">"2026-03-20T11:00:00Z"</span>
+      <span class="punc">}</span>
+    <span class="punc">]</span>
+  <span class="punc">}</span>
+<span class="punc">}</span></pre>
+
+  <h4>analysis_summary 상태 분기</h4>
+  <table>
+    <thead><tr><th>상태</th><th>표시</th><th>탭 동작</th></tr></thead>
+    <tbody>
+      <tr><td><code>has_theme: false</code></td><td>"테마 분류 대기" placeholder (노란 배경)</td><td>비활성</td></tr>
+      <tr><td><code>has_theme: true</code> · <code>latest_report_id: null</code></td><td>"보고서 생성 대기 중"</td><td>비활성</td></tr>
+      <tr><td><code>has_theme: true</code> · <code>latest_report_id</code> 존재</td><td>테마 뱃지 · 예상 CAR · 요약 · 시각</td><td>W-16으로 이동</td></tr>
+    </tbody>
+  </table>
+
+  <h3>2. <span class="method DELETE">DELETE</span> /folders/items/{item_id}</h3>
+<pre class="json">{ <span class="key">"status"</span><span class="punc">:</span> <span class="str">"success"</span><span class="punc">,</span> <span class="key">"message"</span><span class="punc">:</span> <span class="str">"관심 종목이 삭제되었습니다"</span> <span class="punc">}</span></pre>
+
+  <h3>3. <span class="method PUT">PUT</span> /folders/items/move</h3>
+  <h4>Request Body</h4>
+<pre class="json">{ <span class="key">"item_id"</span><span class="punc">:</span> <span class="num">101</span><span class="punc">,</span> <span class="key">"to_folder_id"</span><span class="punc">:</span> <span class="num">2</span> <span class="punc">}</span></pre>
+
+  <h4>Response 200</h4>
+<pre class="json">{
+  <span class="key">"status"</span><span class="punc">:</span> <span class="str">"success"</span><span class="punc">,</span>
+  <span class="key">"data"</span><span class="punc">:</span> <span class="punc">{</span> <span class="key">"item_id"</span><span class="punc">:</span> <span class="num">101</span><span class="punc">,</span> <span class="key">"from_folder_id"</span><span class="punc">:</span> <span class="num">1</span><span class="punc">,</span> <span class="key">"to_folder_id"</span><span class="punc">:</span> <span class="num">2</span> <span class="punc">}</span>
+<span class="punc">}</span></pre>
+
+  <div class="callout warn">
+    <strong>Error</strong> · 대상 폴더에 동일 종목 존재 시 <code>409 DUPLICATE</code> → 토스트 "이 폴더에 이미 등록되어 있습니다"
+  </div>
+
+  <h3>프론트 처리 흐름</h3>
+<div class="flow-box"><span class="step">[화면 진입]</span>
+  <span class="arr">→</span> GET /folders/{folder_id}/items
+  <span class="arr">→</span> 클라이언트 정렬:
+       1차 unread_disclosure_count DESC
+       2차 added_at DESC
+
+<span class="step">[카드 영역별 탭]</span>
+  ├ 헤더(종목명) <span class="arr">→</span> W-11 (ticker)
+  ├ 메모/평단가 <span class="arr">→</span> W-07 (item_id)
+  ├ 분석 요약   <span class="arr">→</span> W-16 (latest_report_id)
+  └ 좌측 스와이프 <span class="arr">→</span> [삭제 | 이동]
+                       ├ 삭제 <span class="arr">→</span> 확인 <span class="arr">→</span> DELETE
+                       └ 이동 <span class="arr">→</span> W-10 모달 <span class="arr">→</span> PUT /folders/items/move</div>
+</section>
+
+
+<!-- ============ W-06 폴더 생성/편집 ============ -->
+<section id="w06">
+  <h2><span class="wid-badge">W-06</span><span class="icon">🎨</span> 폴더 생성 / 편집 모달</h2>
+  <div class="section-desc">하단 시트로 등장. 이름 + 12색 팔레트. 생성 / 수정 모드 분기.</div>
+
+  <h3>호출 API</h3>
+  <div class="api-row"><span class="method POST">POST</span><span class="endpoint">/folders</span> · 생성</div>
+  <div class="api-row"><span class="method PATCH">PATCH</span><span class="endpoint">/folders/{folder_id}</span> · 수정 (변경 필드만)</div>
+
+  <h3>1. <span class="method POST">POST</span> /folders</h3>
+  <h4>Request Body</h4>
+<pre class="json">{ <span class="key">"name"</span><span class="punc">:</span> <span class="str">"2차전지 관련주"</span><span class="punc">,</span> <span class="key">"color"</span><span class="punc">:</span> <span class="str">"#4A90D9"</span> <span class="punc">}</span></pre>
+
+  <h4>Response 201</h4>
+<pre class="json">{
+  <span class="key">"status"</span><span class="punc">:</span> <span class="str">"success"</span><span class="punc">,</span>
+  <span class="key">"data"</span><span class="punc">:</span> <span class="punc">{</span>
+    <span class="key">"id"</span><span class="punc">:</span> <span class="num">2</span><span class="punc">,</span>
+    <span class="key">"name"</span><span class="punc">:</span> <span class="str">"2차전지 관련주"</span><span class="punc">,</span>
+    <span class="key">"color"</span><span class="punc">:</span> <span class="str">"#4A90D9"</span><span class="punc">,</span>
+    <span class="key">"type"</span><span class="punc">:</span> <span class="str">"custom"</span><span class="punc">,</span>
+    <span class="key">"order"</span><span class="punc">:</span> <span class="num">2</span><span class="punc">,</span>
+    <span class="key">"item_count"</span><span class="punc">:</span> <span class="num">0</span><span class="punc">,</span>
+    <span class="key">"unread_disclosure_count"</span><span class="punc">:</span> <span class="num">0</span><span class="punc">,</span>
+    <span class="key">"created_at"</span><span class="punc">:</span> <span class="str">"2026-05-13T10:00:00Z"</span>
+  <span class="punc">}</span>
+<span class="punc">}</span></pre>
+
+  <h4>Error</h4>
+  <table>
+    <thead><tr><th>상황</th><th>HTTP</th><th>code</th></tr></thead>
+    <tbody>
+      <tr><td>이름 비어있음 / 길이 위반 (1~30자)</td><td>400</td><td><code>INVALID_PARAM</code></td></tr>
+      <tr><td>동일 이름 폴더 존재</td><td>409</td><td><code>DUPLICATE</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3>2. <span class="method PATCH">PATCH</span> /folders/{folder_id}</h3>
+  <h4>Request Body — 변경 필드만</h4>
+<pre class="json"><span class="cmt">// 이름만 변경</span>
+{ <span class="key">"name"</span><span class="punc">:</span> <span class="str">"AI 반도체"</span> <span class="punc">}</span>
+
+<span class="cmt">// 색상만 변경</span>
+{ <span class="key">"color"</span><span class="punc">:</span> <span class="str">"#E53935"</span> <span class="punc">}</span></pre>
+
+  <h4>Response 200</h4>
+<pre class="json">{
+  <span class="key">"status"</span><span class="punc">:</span> <span class="str">"success"</span><span class="punc">,</span>
+  <span class="key">"data"</span><span class="punc">:</span> <span class="punc">{</span> <span class="key">"id"</span><span class="punc">:</span> <span class="num">1</span><span class="punc">,</span> <span class="key">"name"</span><span class="punc">:</span> <span class="str">"AI 반도체"</span><span class="punc">,</span> <span class="key">"color"</span><span class="punc">:</span> <span class="str">"#4A90D9"</span> <span class="punc">}</span>
+<span class="punc">}</span></pre>
+
+  <div class="callout warn">
+    <strong>주의</strong> · 기본 폴더(<code>type: "default"</code>)의 <code>name</code> 수정은
+    <code>403 FORBIDDEN</code>. 프론트에서 사전에 readonly 처리해 차단 권장.
+  </div>
+
+  <h3>색상 팔레트 (12색)</h3>
+  <div class="color-grid">
+    <div class="color-swatch" style="background:#E53935">#E53935</div>
+    <div class="color-swatch" style="background:#FB8C00">#FB8C00</div>
+    <div class="color-swatch" style="background:#FDD835; color:#333; text-shadow:none">#FDD835</div>
+    <div class="color-swatch" style="background:#43A047">#43A047</div>
+    <div class="color-swatch" style="background:#1E88E5">#1E88E5</div>
+    <div class="color-swatch" style="background:#8E24AA">#8E24AA</div>
+    <div class="color-swatch" style="background:#6D4C41">#6D4C41</div>
+    <div class="color-swatch" style="background:#1A237E">#1A237E</div>
+    <div class="color-swatch" style="background:#BDBDBD; color:#333; text-shadow:none">#BDBDBD</div>
+    <div class="color-swatch" style="background:#EC407A">#EC407A</div>
+    <div class="color-swatch" style="background:#00ACC1">#00ACC1</div>
+    <div class="color-swatch" style="background:#7CB342">#7CB342</div>
+  </div>
+
+  <h3>프론트 처리 흐름</h3>
+<div class="flow-box"><span class="step">[생성 모드 진입]</span>
+  <span class="arr">→</span> 모달 등장 (bottom sheet, slide-up)
+  <span class="arr">→</span> name="" / color=default(#4A90D9)
+  <span class="arr">→</span> "생성" 버튼 비활성화 (name 입력 시 활성화)
+  <span class="arr">→</span> POST /folders
+     ├ <span class="ok">201</span> <span class="arr">→</span> 모달 닫고 W-04에 새 카드 prepend
+     └ <span class="err">409</span> <span class="arr">→</span> 인라인 "같은 이름의 폴더가 있어요"
+
+<span class="step">[편집 모드 진입]</span>
+  <span class="arr">→</span> 기본 폴더(type=default): name 필드 readonly + 안내문구
+  <span class="arr">→</span> 변경된 필드만 PATCH (둘 다 그대로면 닫기만)</div>
+</section>
+
+
+<!-- ============ W-15 분석 탭 ============ -->
+<section id="w15">
+  <h2><span class="wid-badge">W-15</span><span class="icon">📊</span> 기업 상세 — 분석 탭</h2>
+  <div class="section-desc">예측 테마 (Top-3) + 분석 보고서 히스토리. v4 ThemeSense — 종목→테마 자동 분류 + 테마별 β계수 분석.</div>
+
+  <h3>호출 API (병렬)</h3>
+  <div class="api-row"><span class="method GET">GET</span><span class="endpoint">/analysis/{ticker}/themes</span> · 탭 진입</div>
+  <div class="api-row"><span class="method GET">GET</span><span class="endpoint">/analysis/{ticker}/reports</span> · 탭 진입 (병렬)</div>
+
+  <h3>1. <span class="method GET">GET</span> /analysis/{ticker}/themes</h3>
+  <h4>Response — 테마 분류됨 (Stage 1 완료)</h4>
+<pre class="json">{
+  <span class="key">"status"</span><span class="punc">:</span> <span class="str">"success"</span><span class="punc">,</span>
+  <span class="key">"data"</span><span class="punc">:</span> <span class="punc">{</span>
+    <span class="key">"ticker"</span><span class="punc">:</span> <span class="str">"005930"</span><span class="punc">,</span>
+    <span class="key">"name"</span><span class="punc">:</span> <span class="str">"삼성전자"</span><span class="punc">,</span>
+    <span class="key">"themes"</span><span class="punc">:</span> <span class="punc">[</span>
+      <span class="punc">{</span>
+        <span class="key">"id"</span><span class="punc">:</span> <span class="num">1</span><span class="punc">,</span> <span class="key">"name"</span><span class="punc">:</span> <span class="str">"HBM/메모리"</span><span class="punc">,</span>
+        <span class="key">"probability"</span><span class="punc">:</span> <span class="num">0.9234</span><span class="punc">,</span> <span class="key">"rank"</span><span class="punc">:</span> <span class="num">1</span><span class="punc">,</span> <span class="key">"is_primary"</span><span class="punc">:</span> <span class="bool">true</span><span class="punc">,</span>
+        <span class="key">"top_sensitive_metrics"</span><span class="punc">:</span> <span class="punc">[</span>
+          <span class="punc">{</span> <span class="key">"code"</span><span class="punc">:</span> <span class="str">"op_margin"</span><span class="punc">,</span>     <span class="key">"display_name"</span><span class="punc">:</span> <span class="str">"영업이익률"</span><span class="punc">,</span> <span class="key">"beta"</span><span class="punc">:</span> <span class="num">0.84</span><span class="punc">,</span>  <span class="key">"rank"</span><span class="punc">:</span> <span class="num">1</span> <span class="punc">}</span><span class="punc">,</span>
+          <span class="punc">{</span> <span class="key">"code"</span><span class="punc">:</span> <span class="str">"sales_growth"</span><span class="punc">,</span>  <span class="key">"display_name"</span><span class="punc">:</span> <span class="str">"매출증가율"</span><span class="punc">,</span> <span class="key">"beta"</span><span class="punc">:</span> <span class="num">0.71</span><span class="punc">,</span>  <span class="key">"rank"</span><span class="punc">:</span> <span class="num">2</span> <span class="punc">}</span><span class="punc">,</span>
+          <span class="punc">{</span> <span class="key">"code"</span><span class="punc">:</span> <span class="str">"foreign_ratio"</span><span class="punc">,</span> <span class="key">"display_name"</span><span class="punc">:</span> <span class="str">"외국인비중"</span><span class="punc">,</span> <span class="key">"beta"</span><span class="punc">:</span> <span class="num">0.42</span><span class="punc">,</span>  <span class="key">"rank"</span><span class="punc">:</span> <span class="num">3</span> <span class="punc">}</span><span class="punc">,</span>
+          <span class="punc">{</span> <span class="key">"code"</span><span class="punc">:</span> <span class="str">"per"</span><span class="punc">,</span>           <span class="key">"display_name"</span><span class="punc">:</span> <span class="str">"PER"</span><span class="punc">,</span>        <span class="key">"beta"</span><span class="punc">:</span> <span class="num">-0.38</span><span class="punc">,</span> <span class="key">"rank"</span><span class="punc">:</span> <span class="num">4</span> <span class="punc">}</span><span class="punc">,</span>
+          <span class="punc">{</span> <span class="key">"code"</span><span class="punc">:</span> <span class="str">"volatility"</span><span class="punc">,</span>    <span class="key">"display_name"</span><span class="punc">:</span> <span class="str">"변동성"</span><span class="punc">,</span>    <span class="key">"beta"</span><span class="punc">:</span> <span class="num">-0.29</span><span class="punc">,</span> <span class="key">"rank"</span><span class="punc">:</span> <span class="num">5</span> <span class="punc">}</span>
+        <span class="punc">]</span>
+      <span class="punc">}</span><span class="punc">,</span>
+      <span class="punc">{</span> <span class="key">"id"</span><span class="punc">:</span> <span class="num">3</span><span class="punc">,</span> <span class="key">"name"</span><span class="punc">:</span> <span class="str">"AI인프라"</span><span class="punc">,</span> <span class="key">"probability"</span><span class="punc">:</span> <span class="num">0.7821</span><span class="punc">,</span> <span class="key">"rank"</span><span class="punc">:</span> <span class="num">2</span><span class="punc">,</span> <span class="key">"is_primary"</span><span class="punc">:</span> <span class="bool">false</span> <span class="punc">}</span><span class="punc">,</span>
+      <span class="punc">{</span> <span class="key">"id"</span><span class="punc">:</span> <span class="num">7</span><span class="punc">,</span> <span class="key">"name"</span><span class="punc">:</span> <span class="str">"파운드리"</span><span class="punc">,</span> <span class="key">"probability"</span><span class="punc">:</span> <span class="num">0.4112</span><span class="punc">,</span> <span class="key">"rank"</span><span class="punc">:</span> <span class="num">3</span><span class="punc">,</span> <span class="key">"is_primary"</span><span class="punc">:</span> <span class="bool">false</span> <span class="punc">}</span>
+    <span class="punc">]</span><span class="punc">,</span>
+    <span class="key">"model_version"</span><span class="punc">:</span> <span class="str">"themesense-stage1-v1.0"</span><span class="punc">,</span>
+    <span class="key">"predicted_at"</span><span class="punc">:</span> <span class="str">"2026-05-10T03:00:00Z"</span>
+  <span class="punc">}</span>
+<span class="punc">}</span></pre>
+
+  <h4>Response — 테마 미분류 (학습 universe 외)</h4>
+<pre class="json">{
+  <span class="key">"status"</span><span class="punc">:</span> <span class="str">"success"</span><span class="punc">,</span>
+  <span class="key">"data"</span><span class="punc">:</span> <span class="punc">{</span>
+    <span class="key">"ticker"</span><span class="punc">:</span> <span class="str">"035720"</span><span class="punc">,</span>
+    <span class="key">"name"</span><span class="punc">:</span> <span class="str">"카카오"</span><span class="punc">,</span>
+    <span class="key">"themes"</span><span class="punc">:</span> <span class="punc">[]</span><span class="punc">,</span>
+    <span class="key">"message"</span><span class="punc">:</span> <span class="str">"ThemeSense 학습 universe 외 종목 — 테마 분류 대기 중"</span>
+  <span class="punc">}</span>
+<span class="punc">}</span></pre>
+
+  <div class="callout info">
+    <strong>v4</strong> · Primary 테마(<code>rank: 1</code>)의 <code>top_sensitive_metrics</code>만 W-15 카드에 미리보기로 노출. Secondary·Tertiary는 확률만 표시. 전체 민감지표는 W-16(보고서 상세)에서 채택 테마 기준으로 노출.
+  </div>
+
+  <h3>2. <span class="method GET">GET</span> /analysis/{ticker}/reports</h3>
+  <h4>Request</h4>
+<pre>GET /analysis/{ticker}/reports?sort=latest&amp;page=1&amp;size=20</pre>
+
+  <h4>Response 200</h4>
+<pre class="json">{
+  <span class="key">"status"</span><span class="punc">:</span> <span class="str">"success"</span><span class="punc">,</span>
+  <span class="key">"data"</span><span class="punc">:</span> <span class="punc">{</span>
+    <span class="key">"ticker"</span><span class="punc">:</span> <span class="str">"005930"</span><span class="punc">,</span>
+    <span class="key">"reports"</span><span class="punc">:</span> <span class="punc">[</span>
+      <span class="punc">{</span>
+        <span class="key">"id"</span><span class="punc">:</span> <span class="num">501</span><span class="punc">,</span>
+        <span class="key">"title"</span><span class="punc">:</span> <span class="str">"2025Q4 실적 분석"</span><span class="punc">,</span>
+        <span class="key">"summary"</span><span class="punc">:</span> <span class="str">"컨센서스 상회. HBM 수주 호조."</span><span class="punc">,</span>
+        <span class="key">"applied_theme"</span><span class="punc">:</span> <span class="punc">{</span> <span class="key">"id"</span><span class="punc">:</span> <span class="num">1</span><span class="punc">,</span> <span class="key">"name"</span><span class="punc">:</span> <span class="str">"HBM/메모리"</span> <span class="punc">}</span><span class="punc">,</span>
+        <span class="key">"expected_car"</span><span class="punc">:</span> <span class="num">6.8</span><span class="punc">,</span>
+        <span class="key">"is_read"</span><span class="punc">:</span> <span class="bool">false</span><span class="punc">,</span>
+        <span class="key">"generated_at"</span><span class="punc">:</span> <span class="str">"2026-04-30T18:00:00Z"</span>
+      <span class="punc">}</span><span class="punc">,</span>
+      <span class="punc">{</span>
+        <span class="key">"id"</span><span class="punc">:</span> <span class="num">500</span><span class="punc">,</span>
+        <span class="key">"title"</span><span class="punc">:</span> <span class="str">"2025Q3 실적 분석"</span><span class="punc">,</span>
+        <span class="key">"summary"</span><span class="punc">:</span> <span class="str">"컨센서스 하회. 모바일 부진."</span><span class="punc">,</span>
+        <span class="key">"applied_theme"</span><span class="punc">:</span> <span class="punc">{</span> <span class="key">"id"</span><span class="punc">:</span> <span class="num">3</span><span class="punc">,</span> <span class="key">"name"</span><span class="punc">:</span> <span class="str">"AI인프라"</span> <span class="punc">}</span><span class="punc">,</span>
+        <span class="key">"expected_car"</span><span class="punc">:</span> <span class="num">-3.2</span><span class="punc">,</span>
+        <span class="key">"is_read"</span><span class="punc">:</span> <span class="bool">true</span><span class="punc">,</span>
+        <span class="key">"generated_at"</span><span class="punc">:</span> <span class="str">"2026-01-28T18:00:00Z"</span>
+      <span class="punc">}</span>
+    <span class="punc">]</span><span class="punc">,</span>
+    <span class="key">"pagination"</span><span class="punc">:</span> <span class="punc">{</span> <span class="key">"page"</span><span class="punc">:</span> <span class="num">1</span><span class="punc">,</span> <span class="key">"size"</span><span class="punc">:</span> <span class="num">20</span><span class="punc">,</span> <span class="key">"total_count"</span><span class="punc">:</span> <span class="num">12</span><span class="punc">,</span> <span class="key">"total_pages"</span><span class="punc">:</span> <span class="num">1</span><span class="punc">,</span> <span class="key">"has_next"</span><span class="punc">:</span> <span class="bool">false</span> <span class="punc">}</span>
+  <span class="punc">}</span>
+<span class="punc">}</span></pre>
+
+  <h3>프론트 처리 흐름</h3>
+<div class="flow-box"><span class="step">[탭 진입]</span>
+  <span class="arr">→</span> 두 API 병렬 호출
+
+<span class="step">[테마 영역]</span>
+  ├ themes: []        <span class="arr">→</span> "ThemeSense 학습 universe 외" placeholder
+  └ themes 존재       <span class="arr">→</span> Top-3 테마 카드 (그라데이션, 사용자 변경 불가)
+                            · Primary 강조 (rank=1, 큰 폰트)
+                            · Primary의 top_sensitive_metrics Top-5 미리보기
+
+<span class="step">[보고서 리스트]</span>
+  ├ reports: []   <span class="arr">→</span> 빈 상태 "아직 분석 보고서가 없습니다"
+  └ reports 존재  <span class="arr">→</span> 카드 리스트
+                       · is_read:false <span class="arr">→</span> ● 마커
+                       · 채택 테마 뱃지(applied_theme) + 예상 CAR
+                       · 카드 탭 <span class="arr">→</span> W-16 (report_id 전달)
+                       · 하단 80% 스크롤 <span class="arr">→</span> 다음 페이지 로드</div>
+</section>
+
+
+<!-- ============ W-16 보고서 상세 ============ -->
+<section id="w16">
+  <h2><span class="wid-badge">W-16</span><span class="icon">📈</span> 분석 보고서 상세</h2>
+  <div class="section-desc">v4 핵심 화면 · 채택 테마 + 예상 CAR + 민감 지표별 β·Δ 기여도 시각화.</div>
+
+  <h3>호출 API</h3>
+  <div class="api-row"><span class="method GET">GET</span><span class="endpoint">/analysis/reports/{report_id}</span> · 진입 (자동 read)</div>
+
+  <h3><span class="method GET">GET</span> /analysis/reports/{report_id}</h3>
+  <h4>Response 200</h4>
+<pre class="json">{
+  <span class="key">"status"</span><span class="punc">:</span> <span class="str">"success"</span><span class="punc">,</span>
+  <span class="key">"data"</span><span class="punc">:</span> <span class="punc">{</span>
+    <span class="key">"id"</span><span class="punc">:</span> <span class="num">501</span><span class="punc">,</span>
+    <span class="key">"ticker"</span><span class="punc">:</span> <span class="str">"005930"</span><span class="punc">,</span>
+    <span class="key">"name"</span><span class="punc">:</span> <span class="str">"삼성전자"</span><span class="punc">,</span>
+    <span class="key">"title"</span><span class="punc">:</span> <span class="str">"2025Q4 실적 분석"</span><span class="punc">,</span>
+    <span class="key">"applied_theme"</span><span class="punc">:</span> <span class="punc">{</span>
+      <span class="key">"id"</span><span class="punc">:</span> <span class="num">1</span><span class="punc">,</span>
+      <span class="key">"name"</span><span class="punc">:</span> <span class="str">"HBM/메모리"</span><span class="punc">,</span>
+      <span class="key">"routing_score"</span><span class="punc">:</span> <span class="num">0.88</span>            <span class="cmt">// 공시-테마 매칭 신뢰도</span>
+    <span class="punc">}</span><span class="punc">,</span>
+    <span class="key">"source_disclosure"</span><span class="punc">:</span> <span class="punc">{</span>
+      <span class="key">"id"</span><span class="punc">:</span> <span class="str">"DART_20260130_001"</span><span class="punc">,</span>
+      <span class="key">"title"</span><span class="punc">:</span> <span class="str">"2025년 사업보고서"</span><span class="punc">,</span>
+      <span class="key">"filed_at"</span><span class="punc">:</span> <span class="str">"2026-01-30T18:00:00Z"</span><span class="punc">,</span>
+      <span class="key">"dart_url"</span><span class="punc">:</span> <span class="str">"https://dart.fss.or.kr/dsaf001/main.do?..."</span>
+    <span class="punc">}</span><span class="punc">,</span>
+    <span class="key">"summary"</span><span class="punc">:</span> <span class="str">"HBM/메모리 테마에서 영업이익률 개선이 가장 큰 양의 기여 (+2.83%p). 종합 예상 CAR +6.8%."</span><span class="punc">,</span>
+    <span class="key">"expected_car"</span><span class="punc">:</span> <span class="num">6.8</span><span class="punc">,</span>                  <span class="cmt">// Σ(β·Δ_정규화), 단위 %</span>
+    <span class="key">"car_lower"</span><span class="punc">:</span> <span class="num">3.2</span><span class="punc">,</span>                    <span class="cmt">// 95% CI 하한</span>
+    <span class="key">"car_upper"</span><span class="punc">:</span> <span class="num">10.4</span><span class="punc">,</span>                   <span class="cmt">// 95% CI 상한</span>
+    <span class="key">"metric_contributions"</span><span class="punc">:</span> <span class="punc">[</span>
+      <span class="punc">{</span> <span class="key">"metric_code"</span><span class="punc">:</span> <span class="str">"op_margin"</span><span class="punc">,</span>     <span class="key">"display_name"</span><span class="punc">:</span> <span class="str">"영업이익률"</span><span class="punc">,</span> <span class="key">"beta"</span><span class="punc">:</span> <span class="num">0.84</span><span class="punc">,</span>  <span class="key">"raw_value"</span><span class="punc">:</span> <span class="str">"11.79%"</span><span class="punc">,</span> <span class="key">"delta"</span><span class="punc">:</span> <span class="num">1.2</span><span class="punc">,</span>  <span class="key">"contribution"</span><span class="punc">:</span> <span class="num">2.83</span> <span class="punc">}</span><span class="punc">,</span>
+      <span class="punc">{</span> <span class="key">"metric_code"</span><span class="punc">:</span> <span class="str">"sales_growth"</span><span class="punc">,</span>  <span class="key">"display_name"</span><span class="punc">:</span> <span class="str">"매출증가율"</span><span class="punc">,</span> <span class="key">"beta"</span><span class="punc">:</span> <span class="num">0.71</span><span class="punc">,</span>  <span class="key">"raw_value"</span><span class="punc">:</span> <span class="str">"+8.3%"</span><span class="punc">,</span>  <span class="key">"delta"</span><span class="punc">:</span> <span class="num">8.3</span><span class="punc">,</span>  <span class="key">"contribution"</span><span class="punc">:</span> <span class="num">1.97</span> <span class="punc">}</span><span class="punc">,</span>
+      <span class="punc">{</span> <span class="key">"metric_code"</span><span class="punc">:</span> <span class="str">"foreign_ratio"</span><span class="punc">,</span> <span class="key">"display_name"</span><span class="punc">:</span> <span class="str">"외국인비중"</span><span class="punc">,</span> <span class="key">"beta"</span><span class="punc">:</span> <span class="num">0.42</span><span class="punc">,</span>  <span class="key">"raw_value"</span><span class="punc">:</span> <span class="str">"52.4%"</span><span class="punc">,</span>  <span class="key">"delta"</span><span class="punc">:</span> <span class="num">2.9</span><span class="punc">,</span>  <span class="key">"contribution"</span><span class="punc">:</span> <span class="num">1.21</span> <span class="punc">}</span><span class="punc">,</span>
+      <span class="punc">{</span> <span class="key">"metric_code"</span><span class="punc">:</span> <span class="str">"per"</span><span class="punc">,</span>           <span class="key">"display_name"</span><span class="punc">:</span> <span class="str">"PER"</span><span class="punc">,</span>        <span class="key">"beta"</span><span class="punc">:</span> <span class="num">-0.38</span><span class="punc">,</span> <span class="key">"raw_value"</span><span class="punc">:</span> <span class="str">"12.5"</span><span class="punc">,</span>   <span class="key">"delta"</span><span class="punc">:</span> <span class="num">0.8</span><span class="punc">,</span>  <span class="key">"contribution"</span><span class="punc">:</span> <span class="num">-0.42</span> <span class="punc">}</span><span class="punc">,</span>
+      <span class="punc">{</span> <span class="key">"metric_code"</span><span class="punc">:</span> <span class="str">"volatility"</span><span class="punc">,</span>    <span class="key">"display_name"</span><span class="punc">:</span> <span class="str">"변동성"</span><span class="punc">,</span>    <span class="key">"beta"</span><span class="punc">:</span> <span class="num">-0.29</span><span class="punc">,</span> <span class="key">"raw_value"</span><span class="punc">:</span> <span class="str">"22.4%"</span><span class="punc">,</span>  <span class="key">"delta"</span><span class="punc">:</span> <span class="num">-1.8</span><span class="punc">,</span> <span class="key">"contribution"</span><span class="punc">:</span> <span class="num">0.21</span> <span class="punc">}</span>
+    <span class="punc">]</span><span class="punc">,</span>
+    <span class="key">"key_findings"</span><span class="punc">:</span> <span class="punc">[</span>
+      <span class="str">"반도체 부문 영업이익 전분기 대비 32% 증가"</span><span class="punc">,</span>
+      <span class="str">"HBM3E 양산 본격화로 고부가가치 매출 확대"</span><span class="punc">,</span>
+      <span class="str">"외국인 매수세 유입 (테마 민감도 β=+0.42 구간)"</span>
+    <span class="punc">]</span><span class="punc">,</span>
+    <span class="key">"metrics"</span><span class="punc">:</span> <span class="punc">{</span>
+      <span class="key">"revenue"</span><span class="punc">:</span> <span class="num">78000000000000</span><span class="punc">,</span>
+      <span class="key">"operating_profit"</span><span class="punc">:</span> <span class="num">9200000000000</span><span class="punc">,</span>
+      <span class="key">"net_income"</span><span class="punc">:</span> <span class="num">6800000000000</span><span class="punc">,</span>
+      <span class="key">"yoy_revenue_growth"</span><span class="punc">:</span> <span class="num">8.3</span><span class="punc">,</span>
+      <span class="key">"yoy_op_growth"</span><span class="punc">:</span> <span class="num">12.1</span>
+    <span class="punc">}</span><span class="punc">,</span>
+    <span class="key">"stage1_model_version"</span><span class="punc">:</span> <span class="str">"themesense-stage1-v1.0"</span><span class="punc">,</span>
+    <span class="key">"stage2_model_version"</span><span class="punc">:</span> <span class="str">"themesense-stage2-v1.0"</span><span class="punc">,</span>
+    <span class="key">"is_read"</span><span class="punc">:</span> <span class="bool">true</span><span class="punc">,</span>
+    <span class="key">"generated_at"</span><span class="punc">:</span> <span class="str">"2026-01-30T18:00:00Z"</span>
+  <span class="punc">}</span>
+<span class="punc">}</span></pre>
+
+  <div class="callout note">
+    <strong>자동 처리 (서버 side-effect)</strong>
+    <ul style="margin: 8px 0 0 -8px;">
+      <li>응답 시 <code>is_read=true</code> 자동 갱신</li>
+      <li>해당 사용자의 <code>folders[].unread_disclosure_count</code> 즉시 -1</li>
+      <li>다음 W-04 진입 시 카운트 반영됨</li>
+    </ul>
+  </div>
+
+  <h3>기여도 시각화 규칙</h3>
+  <table>
+    <thead><tr><th>요소</th><th>스펙</th></tr></thead>
+    <tbody>
+      <tr><td>막대 영역</td><td>중앙 0% 기준선 · 우측(양 기여) / 좌측(음 기여) 분기</td></tr>
+      <tr><td>양 기여 색상</td><td>그라데이션 <code>#1A237E → #16A34A</code> (초록)</td></tr>
+      <tr><td>음 기여 색상</td><td>한국 표준 파랑 <code>#1976D2</code></td></tr>
+      <tr><td>막대 너비</td><td><code>|contribution| / max_abs × 절반_width</code></td></tr>
+      <tr><td>표시 포맷</td><td>지표명 · <code>β=±N.NN</code> · <code>▲/▼ ±N.NN%p</code></td></tr>
+      <tr><td>raw_value</td><td>막대 하단 회색 작은 텍스트 (예: <code>11.79% (YoY +1.2%p)</code>)</td></tr>
+      <tr><td>예상 CAR</td><td><code>Σ(β_i × Δ_i_정규화)</code> · 헤더에 크게 표시 + 95% 신뢰구간</td></tr>
+    </tbody>
+  </table>
+
+  <h3>프론트 처리 흐름</h3>
+<div class="flow-box"><span class="step">[진입]</span>
+  <span class="arr">→</span> GET /analysis/reports/{report_id}
+  <span class="arr">→</span> <span class="ok">200</span>
+     ├ 로컬 캐시의 폴더 unread_count -1 (낙관적 갱신)
+     ├ 헤더에 applied_theme 뱃지 + expected_car 크게 표시 + [car_lower, car_upper] 신뢰구간
+     ├ metric_contributions를 |contribution| 내림차순 정렬해 분기 막대 렌더
+     ├ summary (LLM 자연어) 단락 표시
+     ├ key_findings를 bullet list
+     └ source_disclosure.dart_url 외부 브라우저 열기 버튼
+
+<span class="step">[공유 버튼]</span>
+  <span class="arr">→</span> 네이티브 share sheet (이미지 캡처 or report deep link)</div>
+</section>
+
+
+<!-- ============ W-17 알림 목록 ============ -->
+<section id="w17">
+  <h2><span class="wid-badge">W-17</span><span class="icon">🔔</span> 알림 목록</h2>
+  <div class="section-desc">FCM 푸시 누적 내역. v3는 <code>disclosure_report</code> 1종.</div>
+
+  <h3>호출 API</h3>
+  <div class="api-row"><span class="method GET">GET</span><span class="endpoint">/notifications</span> · 진입 / 새로고침 / 필터 변경</div>
+  <div class="api-row"><span class="method PATCH">PATCH</span><span class="endpoint">/notifications/{id}/read</span> · 카드 탭</div>
+  <div class="api-row"><span class="method PATCH">PATCH</span><span class="endpoint">/notifications/read-all</span> · "모두 읽음"</div>
+
+  <h3>1. <span class="method GET">GET</span> /notifications</h3>
+  <h4>Request</h4>
+<pre>GET /notifications?is_read=false&amp;type=disclosure_report&amp;page=1&amp;size=20</pre>
+
+  <table>
+    <thead><tr><th>파라미터</th><th>값</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td><code>is_read</code></td><td><code>true</code> / <code>false</code> / 미입력</td><td>필터칩 "전체/안읽음/읽음" 매핑</td></tr>
+      <tr><td><code>type</code></td><td><code>disclosure_report</code> / 미입력</td><td>v3는 1종</td></tr>
+      <tr><td><code>page</code>, <code>size</code></td><td>페이지네이션</td><td>size default 20</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Response 200</h4>
+<pre class="json">{
+  <span class="key">"status"</span><span class="punc">:</span> <span class="str">"success"</span><span class="punc">,</span>
+  <span class="key">"data"</span><span class="punc">:</span> <span class="punc">{</span>
+    <span class="key">"notifications"</span><span class="punc">:</span> <span class="punc">[</span>
+      <span class="punc">{</span>
+        <span class="key">"id"</span><span class="punc">:</span> <span class="num">1001</span><span class="punc">,</span>
+        <span class="key">"type"</span><span class="punc">:</span> <span class="str">"disclosure_report"</span><span class="punc">,</span>
+        <span class="key">"title"</span><span class="punc">:</span> <span class="str">"삼성전자 새 분석 보고서"</span><span class="punc">,</span>
+        <span class="key">"body"</span><span class="punc">:</span> <span class="str">"2025Q4 실적 분석 보고서가 생성되었습니다"</span><span class="punc">,</span>
+        <span class="key">"ticker"</span><span class="punc">:</span> <span class="str">"005930"</span><span class="punc">,</span>
+        <span class="key">"stock_name"</span><span class="punc">:</span> <span class="str">"삼성전자"</span><span class="punc">,</span>
+        <span class="key">"report_id"</span><span class="punc">:</span> <span class="num">501</span><span class="punc">,</span>
+        <span class="key">"is_read"</span><span class="punc">:</span> <span class="bool">false</span><span class="punc">,</span>
+        <span class="key">"created_at"</span><span class="punc">:</span> <span class="str">"2026-05-13T08:00:00Z"</span>
+      <span class="punc">}</span>
+    <span class="punc">]</span><span class="punc">,</span>
+    <span class="key">"unread_count"</span><span class="punc">:</span> <span class="num">3</span><span class="punc">,</span>
+    <span class="key">"pagination"</span><span class="punc">:</span> <span class="punc">{</span> <span class="key">"page"</span><span class="punc">:</span> <span class="num">1</span><span class="punc">,</span> <span class="key">"size"</span><span class="punc">:</span> <span class="num">20</span><span class="punc">,</span> <span class="key">"total_count"</span><span class="punc">:</span> <span class="num">30</span><span class="punc">,</span> <span class="key">"total_pages"</span><span class="punc">:</span> <span class="num">2</span><span class="punc">,</span> <span class="key">"has_next"</span><span class="punc">:</span> <span class="bool">true</span> <span class="punc">}</span>
+  <span class="punc">}</span>
+<span class="punc">}</span></pre>
+
+  <h3>2. <span class="method PATCH">PATCH</span> /notifications/{id}/read</h3>
+<pre class="json">{ <span class="key">"status"</span><span class="punc">:</span> <span class="str">"success"</span><span class="punc">,</span> <span class="key">"message"</span><span class="punc">:</span> <span class="str">"알림이 읽음 처리되었습니다"</span> <span class="punc">}</span></pre>
+
+  <h3>3. <span class="method PATCH">PATCH</span> /notifications/read-all</h3>
+  <h4>Request Body (선택)</h4>
+<pre class="json"><span class="cmt">// 종목 단위 일괄 읽음</span>
+{ <span class="key">"ticker"</span><span class="punc">:</span> <span class="str">"005930"</span> <span class="punc">}</span>
+
+<span class="cmt">// body 없으면 전체 읽음 처리</span></pre>
+
+  <h4>Response 200</h4>
+<pre class="json">{
+  <span class="key">"status"</span><span class="punc">:</span> <span class="str">"success"</span><span class="punc">,</span>
+  <span class="key">"data"</span><span class="punc">:</span> <span class="punc">{</span> <span class="key">"read_count"</span><span class="punc">:</span> <span class="num">5</span> <span class="punc">}</span><span class="punc">,</span>
+  <span class="key">"message"</span><span class="punc">:</span> <span class="str">"5개의 알림이 읽음 처리되었습니다"</span>
+<span class="punc">}</span></pre>
+
+  <h3>FCM 푸시 페이로드</h3>
+  <div class="callout info">서버 → FCM 발송 시 클라이언트가 받게 될 data payload. 푸시 탭 시 <code>deep_link</code>로 W-16 직행.</div>
+<pre class="json">{
+  <span class="key">"notification"</span><span class="punc">:</span> <span class="punc">{</span>
+    <span class="key">"title"</span><span class="punc">:</span> <span class="str">"삼성전자 새 분석 보고서"</span><span class="punc">,</span>
+    <span class="key">"body"</span><span class="punc">:</span> <span class="str">"2025Q4 실적 분석 보고서가 생성되었습니다"</span>
+  <span class="punc">}</span><span class="punc">,</span>
+  <span class="key">"data"</span><span class="punc">:</span> <span class="punc">{</span>
+    <span class="key">"type"</span><span class="punc">:</span> <span class="str">"disclosure_report"</span><span class="punc">,</span>
+    <span class="key">"notification_id"</span><span class="punc">:</span> <span class="str">"1001"</span><span class="punc">,</span>
+    <span class="key">"report_id"</span><span class="punc">:</span> <span class="str">"501"</span><span class="punc">,</span>
+    <span class="key">"ticker"</span><span class="punc">:</span> <span class="str">"005930"</span><span class="punc">,</span>
+    <span class="key">"deep_link"</span><span class="punc">:</span> <span class="str">"myapp://reports/501"</span>
+  <span class="punc">}</span>
+<span class="punc">}</span></pre>
+
+  <h3>프론트 처리 흐름</h3>
+<div class="flow-box"><span class="step">[진입]</span>
+  <span class="arr">→</span> GET /notifications (필터칩 = "전체" 기본)
+  <span class="arr">→</span> 클라이언트 그룹핑: 오늘 / 어제 / 이번 주 / 이전 (created_at 기준)
+
+<span class="step">[필터칩 변경]</span>
+  <span class="arr">→</span> is_read 쿼리 변경하여 재호출
+
+<span class="step">[카드 탭]</span>
+  <span class="arr">→</span> PATCH /notifications/{id}/read  (fire-and-forget, 실패해도 진행)
+  <span class="arr">→</span> 로컬 unread_count -1 (낙관적)
+  <span class="arr">→</span> W-16 이동 (report_id)
+
+<span class="step">[모두 읽음]</span>
+  <span class="arr">→</span> 확인 다이얼로그 없이 즉시 PATCH /notifications/read-all
+  <span class="arr">→</span> <span class="ok">200</span> <span class="arr">→</span> 리스트의 is_read 일괄 true, ● 마커 제거
+
+<span class="step">[무한 스크롤]</span>
+  <span class="arr">→</span> has_next=true &amp;&amp; 80% 스크롤 <span class="arr">→</span> page++ 재호출 후 append</div>
+</section>
+
+
+<!-- ============ 매트릭스 요약 ============ -->
+<section id="matrix">
+  <h2><span class="icon">📋</span> 화면 ↔ API 매트릭스</h2>
+  <div class="section-desc">대상 8개 화면이 호출하는 API 전체 매트릭스.</div>
+
+  <table class="matrix-table">
+    <thead><tr><th>화면</th><th>호출 API</th><th>Method</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>W-02</strong> 로그인</td>
+        <td><code>/auth/login</code> · <code>/notifications/fcm-token</code></td>
+        <td><span class="method POST">POST</span><span class="method POST">POST</span></td>
+      </tr>
+      <tr>
+        <td><strong>W-03</strong> 회원가입</td>
+        <td><code>/auth/check-email</code> · <code>/auth/signup</code></td>
+        <td><span class="method GET">GET</span><span class="method POST">POST</span></td>
+      </tr>
+      <tr>
+        <td><strong>W-04</strong> 폴더 목록</td>
+        <td><code>/folders</code> · <code>/folders/order</code> · <code>/folders/{id}</code></td>
+        <td><span class="method GET">GET</span><span class="method PUT">PUT</span><span class="method DELETE">DELETE</span></td>
+      </tr>
+      <tr>
+        <td><strong>W-05</strong> 폴더 상세</td>
+        <td><code>/folders/{id}/items</code> · <code>/folders/items/{id}</code> · <code>/folders/items/move</code></td>
+        <td><span class="method GET">GET</span><span class="method DELETE">DELETE</span><span class="method PUT">PUT</span></td>
+      </tr>
+      <tr>
+        <td><strong>W-06</strong> 폴더 생성/편집</td>
+        <td><code>/folders</code> · <code>/folders/{id}</code></td>
+        <td><span class="method POST">POST</span><span class="method PATCH">PATCH</span></td>
+      </tr>
+      <tr>
+        <td><strong>W-15</strong> 분석 탭</td>
+        <td><code>/analysis/{ticker}/themes</code> · <code>/analysis/{ticker}/reports</code></td>
+        <td><span class="method GET">GET</span><span class="method GET">GET</span></td>
+      </tr>
+      <tr>
+        <td><strong>W-16</strong> 보고서 상세</td>
+        <td><code>/analysis/reports/{id}</code></td>
+        <td><span class="method GET">GET</span></td>
+      </tr>
+      <tr>
+        <td><strong>W-17</strong> 알림 목록</td>
+        <td><code>/notifications</code> · <code>/notifications/{id}/read</code> · <code>/notifications/read-all</code></td>
+        <td><span class="method GET">GET</span><span class="method PATCH">PATCH</span><span class="method PATCH">PATCH</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout note">
+    <strong>총 16개 엔드포인트</strong> · 8개 화면이 사용 · v4 ThemeSense 통합 — <code>/analysis/{ticker}/model</code> → <code>/analysis/{ticker}/themes</code> 교체
+  </div>
+</section>
+
+</main>
+</div>
+
+</body>
+</html>
