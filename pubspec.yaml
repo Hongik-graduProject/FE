@@ -15,14 +15,24 @@ dependencies:
   # HTTP 통신
   dio: ^5.4.0
 
-  # 로컬 저장소 (토큰 저장)
-  flutter_secure_storage: ^9.0.0
+  # 로컬 저장소 (토큰 저장) — web/macOS-desktop 호환 위해 shared_preferences 사용.
+  # (운영 모바일에서는 보안 강화를 위해 flutter_secure_storage 재도입 고려)
+  shared_preferences: ^2.2.0
 
   # 상태관리
   provider: ^6.1.1
 
   # 아이콘
   cupertino_icons: ^1.0.6
+
+  # Firebase (FCM 푸시) — google-services.json / GoogleService-Info.plist는
+  # Firebase 콘솔에서 받아 android/app/ 과 ios/Runner/ 에 직접 배치한다.
+  # 미배치 시 main.dart의 초기화에서 catch되고 앱은 정상 동작(FCM만 비활성).
+  firebase_core: ^3.6.0
+  firebase_messaging: ^15.1.3
+
+  # 뉴스·공시 외부 링크 열기 (web에선 새 탭, mobile에선 외부 브라우저)
+  url_launcher: ^6.3.1
 
 dev_dependencies:
   flutter_test:

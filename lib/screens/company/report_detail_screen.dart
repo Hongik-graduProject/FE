@@ -121,9 +121,10 @@ class _HeroHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final car = report.expectedCar;
-    final carPositive = car >= 0;
-    final carStr =
-        carPositive ? '+${car.toStringAsFixed(1)}%' : '${car.toStringAsFixed(1)}%';
+    final carPositive = car != null && car >= 0;
+    final carStr = car != null
+        ? (carPositive ? '+${car.toStringAsFixed(1)}%' : '${car.toStringAsFixed(1)}%')
+        : '-';
     final dateStr = _formatDate(report.generatedAt, dateOnly: true);
 
     return Container(
@@ -397,7 +398,7 @@ class _DivergingBarRow extends StatelessWidget {
           const SizedBox(height: 3),
           // raw 값
           Text(
-            metric.rawValue,
+            metric.rawValue ?? '-',
             style: const TextStyle(fontSize: 10, color: Color(0xFF9CA3AF)),
           ),
         ],

@@ -1,54 +1,49 @@
 // lib/services/token_service.dart
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/constants.dart';
 
+/// Token storage backed by SharedPreferences (works on web/macOS/mobile without
+/// keychain entitlements or Web Crypto). Tokens are short-lived Supabase JWTs.
 class TokenService {
-  static const _storage = FlutterSecureStorage(
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
-  );
+  static Future<SharedPreferences> get _prefs => SharedPreferences.getInstance();
 
-  // Access Token 저장
   static Future<void> saveAccessToken(String token) async {
-    await _storage.write(key: AppConstants.accessTokenKey, value: token);
+    final p = await _prefs;
+    await p.setString(AppConstants.accessTokenKey, token);
   }
 
-  // Refresh Token 저장
   static Future<void> saveRefreshToken(String token) async {
-    await _storage.write(key: AppConstants.refreshTokenKey, value: token);
+    final p = await _prefs;
+    await p.setString(AppConstants.refreshTokenKey, token);
   }
 
-  // 두 토큰 동시 저장
   static Future<void> saveTokens({
     required String accessToken,
     required String refreshToken,
   }) async {
-    await Future.wait([
-      saveAccessToken(accessToken),
-      saveRefreshToken(refreshToken),
-    ]);
+    final p = await _prefs;
+    await p.setString(AppConstants.accessTokenKey, accessToken);
+    await p.setString(AppConstants.refreshTokenKey, refreshToken);
   }
 
-  // Access Token 조회
   static Future<String?> getAccessToken() async {
-    return await _storage.read(key: AppConstants.accessTokenKey);
+    final p = await _prefs;
+    return p.getString(AppConstants.accessTokenKey);
   }
 
-  // Refresh Token 조회
   static Future<String?> getRefreshToken() async {
-    return await _storage.read(key: AppConstants.refreshTokenKey);
+    final p = await _prefs;
+    return p.getString(AppConstants.refreshTokenKey);
   }
 
-  // 로그인 여부 확인
   static Future<bool> isLoggedIn() async {
     final token = await getAccessToken();
     return token != null && token.isNotEmpty;
   }
 
-  // 모든 토큰 삭제 (로그아웃)
   static Future<void> clearTokens() async {
-    await Future.wait([
-      _storage.delete(key: AppConstants.accessTokenKey),
-      _storage.delete(key: AppConstants.refreshTokenKey),
-    ]);
+    final p = await _prefs;
+    await p.remove(AppConstants.accessTokenKey);
+    await p.remove(AppConstants.refreshTokenKey);
   }
 }

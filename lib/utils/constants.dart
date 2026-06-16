@@ -1,8 +1,14 @@
 // lib/utils/constants.dart
 
 class AppConstants {
-  // Base URL — 실제 도메인으로 교체하세요
-  static const String baseUrl = 'http://api.yourdomain.com/v1';
+  // Base URL — 로컬 백엔드(Spring Boot, context-path 없음, 포트 8080)를 가리킨다.
+  // BE는 `/v1` 같은 prefix를 쓰지 않으므로 붙이지 않는다.
+  //
+  // 실행 환경에 따라 아래 값으로 교체하세요:
+  //   - macOS/웹/iOS 시뮬레이터:  http://localhost:8080   ← 기본값
+  //   - Android 에뮬레이터:        http://10.0.2.2:8080   (호스트 머신의 localhost)
+  //   - 실기기(같은 LAN):          http://<Mac의 LAN IP>:8080   (예: http://192.168.0.10:8080)
+  static const String baseUrl = 'http://localhost:8080';
 
   // Token 관련
   static const String accessTokenKey = 'access_token';
