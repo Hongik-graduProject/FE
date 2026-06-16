@@ -1,5 +1,6 @@
-// lib/screens/folder/folder_detail_screen.dart — W-05 폴더 상세
+// lib/screens/folder/folder_detail_screen.dart — W-05 폴더 상세 + 종목 CRUD
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../models/folder_model.dart';
 import '../../services/api_service.dart';
 import '../company/company_detail_screen.dart';
@@ -32,12 +33,116 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
     });
   }
 
+  Future<void> _openItemActions(FolderItem item) async {
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit_outlined),
+              title: const Text('메모·평단가 수정'),
+              onTap: () => Navigator.pop(context, 'edit'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.drive_file_move_outline),
+              title: const Text('다른 폴더로 이동'),
+              onTap: () => Navigator.pop(context, 'move'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete_outline,
+                  color: Color(0xFFEF4444)),
+              title: const Text('관심에서 삭제',
+                  style: TextStyle(color: Color(0xFFEF4444))),
+              onTap: () => Navigator.pop(context, 'delete'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (!mounted || action == null) return;
+
+    switch (action) {
+      case 'edit':
+        await _openEditMemo(item);
+        break;
+      case 'move':
+        await _openMove(item);
+        break;
+      case 'delete':
+        await _confirmDelete(item);
+        break;
+    }
+  }
+
+  Future<void> _openEditMemo(FolderItem item) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => _MemoEditDialog(item: item),
+    );
+    if (ok == true) _reload();
+  }
+
+  Future<void> _openMove(FolderItem item) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => _MoveDialog(item: item, currentFolderId: _args.id),
+    );
+    if (ok == true) _reload();
+  }
+
+  Future<void> _confirmDelete(FolderItem item) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('"${item.name}" 삭제'),
+        content: const Text('이 폴더에서 종목을 제거합니다.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('취소')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFFEF4444)),
+            child: const Text('삭제'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ApiService().deleteFavorite(item.id);
+      messenger
+          .showSnackBar(const SnackBar(content: Text('관심에서 삭제되었습니다')));
+      _reload();
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
         title: Text(_initialized ? _args.name : ''),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          await Navigator.pushNamed(context, '/search');
+          // 검색 화면에서 돌아오면 새로 추가된 종목 반영 위해 reload
+          if (mounted) _reload();
+        },
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('종목 추가'),
       ),
       body: FutureBuilder<FolderItemsResponse>(
         future: _future,
@@ -77,6 +182,8 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
                       initialTab: 0,
                     ),
                   ),
+                  onLongPress: () => _openItemActions(items[index]),
+                  onMore: () => _openItemActions(items[index]),
                 ),
               ),
             ),
@@ -92,17 +199,27 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
 class _CompanyCard extends StatelessWidget {
   final FolderItem item;
   final VoidCallback onTap;
+  final VoidCallback onLongPress;
+  final VoidCallback onMore;
 
-  const _CompanyCard({required this.item, required this.onTap});
+  const _CompanyCard({
+    required this.item,
+    required this.onTap,
+    required this.onLongPress,
+    required this.onMore,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final isUp = item.changeRate >= 0;
+    final rate = item.changeRate;
+    final isUp = (rate ?? 0) >= 0;
     final priceColor =
         isUp ? const Color(0xFFE53935) : const Color(0xFF1976D2);
     final priceIcon = isUp ? '▲' : '▼';
+    final priceStr =
+        item.currentPrice != null ? '₩${_formatPrice(item.currentPrice!)}' : '-';
     final changeStr =
-        '$priceIcon ${item.changeRate.abs().toStringAsFixed(2)}%';
+        rate != null ? '$priceIcon ${rate.abs().toStringAsFixed(2)}%' : '-';
     final hasUnread = item.unreadDisclosureCount > 0;
 
     return Material(
@@ -110,16 +227,16 @@ class _CompanyCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: onTap,
+        onLongPress: onLongPress,
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          padding: const EdgeInsets.fromLTRB(14, 14, 6, 14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: const Color(0xFFE5E7EB)),
           ),
           child: Row(
             children: [
-              // 종목 코드 배지
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -138,16 +255,18 @@ class _CompanyCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              // 종목명
               Expanded(
                 child: Row(
                   children: [
-                    Text(
-                      item.name,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF111827),
+                    Flexible(
+                      child: Text(
+                        item.name,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF111827),
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     if (hasUnread) ...[
@@ -164,12 +283,11 @@ class _CompanyCard extends StatelessWidget {
                   ],
                 ),
               ),
-              // 시세
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '₩${_formatPrice(item.currentPrice)}',
+                    priceStr,
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w800,
@@ -187,11 +305,15 @@ class _CompanyCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(width: 6),
-              const Icon(
-                Icons.chevron_right_rounded,
-                size: 18,
-                color: Color(0xFF9CA3AF),
+              IconButton(
+                icon: const Icon(Icons.more_vert_rounded,
+                    size: 18, color: Color(0xFF9CA3AF)),
+                tooltip: '종목 옵션',
+                onPressed: onMore,
+                splashRadius: 18,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(
+                    minWidth: 28, minHeight: 28),
               ),
             ],
           ),
@@ -206,6 +328,213 @@ class _CompanyCard extends StatelessWidget {
           (m) => '${m[1]},',
         );
   }
+}
+
+// ─── Memo Edit Dialog ────────────────────────────────────────────────────────
+
+class _MemoEditDialog extends StatefulWidget {
+  final FolderItem item;
+  const _MemoEditDialog({required this.item});
+
+  @override
+  State<_MemoEditDialog> createState() => _MemoEditDialogState();
+}
+
+class _MemoEditDialogState extends State<_MemoEditDialog> {
+  // FolderItem에 memo/avgPrice는 없으므로 초기값은 비워둔다.
+  // (BE GET /folders/{id}/items 응답에는 memo·avg_price가 없는 상태)
+  late final TextEditingController _memo = TextEditingController();
+  late final TextEditingController _avgPrice = TextEditingController();
+  bool _submitting = false;
+
+  @override
+  void dispose() {
+    _memo.dispose();
+    _avgPrice.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final memoText = _memo.text.trim();
+    final priceText = _avgPrice.text.replaceAll(',', '').trim();
+    int? avgPrice;
+    if (priceText.isNotEmpty) {
+      avgPrice = int.tryParse(priceText);
+      if (avgPrice == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('평단가는 숫자만 입력해주세요')),
+        );
+        return;
+      }
+    }
+    setState(() => _submitting = true);
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    try {
+      await ApiService().updateFavorite(
+        widget.item.id,
+        FavoriteUpdateRequest(
+          memo: memoText.isEmpty ? null : memoText,
+          avgPrice: avgPrice,
+        ),
+      );
+      navigator.pop(true);
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('${widget.item.name} 메모'),
+      content: SizedBox(
+        width: 320,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _memo,
+              maxLength: 100,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                labelText: '메모',
+                hintText: '예: 다음 분기 실적 기대',
+                counterText: '',
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _avgPrice,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: const InputDecoration(
+                labelText: '평단가 (원)',
+                hintText: '예: 75000',
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _submitting ? null : () => Navigator.pop(context, false),
+          child: const Text('취소'),
+        ),
+        TextButton(
+          onPressed: _submitting ? null : _submit,
+          child: _submitting
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('저장'),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── Move Dialog ──────────────────────────────────────────────────────────────
+
+class _MoveDialog extends StatefulWidget {
+  final FolderItem item;
+  final int currentFolderId;
+
+  const _MoveDialog({required this.item, required this.currentFolderId});
+
+  @override
+  State<_MoveDialog> createState() => _MoveDialogState();
+}
+
+class _MoveDialogState extends State<_MoveDialog> {
+  late Future<FoldersResponse> _foldersFuture;
+  bool _submitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _foldersFuture = ApiService().getFolders();
+  }
+
+  Future<void> _select(Folder target) async {
+    setState(() => _submitting = true);
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    try {
+      await ApiService()
+          .moveFavorite(widget.item.id, target.id);
+      navigator.pop(true);
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('"${widget.item.name}" 이동'),
+      content: SizedBox(
+        width: 320,
+        height: 320,
+        child: FutureBuilder<FoldersResponse>(
+          future: _foldersFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) {
+              return Center(child: Text(snapshot.error.toString()));
+            }
+            final targets = snapshot.data!.folders
+                .where((f) => f.id != widget.currentFolderId)
+                .toList();
+            if (targets.isEmpty) {
+              return const Center(child: Text('이동 가능한 다른 폴더가 없습니다'));
+            }
+            return ListView.separated(
+              itemCount: targets.length,
+              separatorBuilder: (_, __) => const Divider(height: 1),
+              itemBuilder: (_, i) {
+                final f = targets[i];
+                return ListTile(
+                  leading: Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: _hexToColor(f.color),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Center(
+                        child: Text('📁', style: TextStyle(fontSize: 14))),
+                  ),
+                  title: Text(f.name),
+                  subtitle: Text('${f.itemCount}개'),
+                  onTap: _submitting ? null : () => _select(f),
+                );
+              },
+            );
+          },
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _submitting ? null : () => Navigator.pop(context, false),
+          child: const Text('취소'),
+        ),
+      ],
+    );
+  }
+}
+
+Color _hexToColor(String hex) {
+  final h = hex.replaceFirst('#', '');
+  return Color(int.parse('FF$h', radix: 16));
 }
 
 // ─── Empty / Error ────────────────────────────────────────────────────────────
