@@ -72,9 +72,11 @@ class ThemesResponse {
 
   factory ThemesResponse.fromJson(Map<String, dynamic> json) {
     final data = json['data'] as Map<String, dynamic>;
+    final ticker = data['ticker'] as String;
     return ThemesResponse(
-      ticker: data['ticker'] as String,
-      name: data['name'] as String,
+      ticker: ticker,
+      // BE ThemesResponse.name은 nullable(NON_NULL로 누락 가능) → ticker로 폴백.
+      name: (data['name'] as String?) ?? ticker,
       themes: (data['themes'] as List? ?? [])
           .map((t) => StockTheme.fromJson(t as Map<String, dynamic>))
           .toList(),
@@ -122,8 +124,8 @@ class AnalysisReport {
 
   factory AnalysisReport.fromJson(Map<String, dynamic> json) => AnalysisReport(
         id: json['id'] as int,
-        title: json['title'] as String,
-        summary: json['summary'] as String,
+        title: (json['title'] as String?) ?? '',
+        summary: (json['summary'] as String?) ?? '',
         appliedTheme: json['applied_theme'] != null
             ? AppliedTheme.fromJson(
                 json['applied_theme'] as Map<String, dynamic>)
@@ -191,7 +193,8 @@ class MetricContribution {
   final String metricCode;
   final String displayName;
   final double beta;
-  final String rawValue;
+  // BE MetricContribution.raw_value는 nullable.
+  final String? rawValue;
   final double delta;
   final double contribution;
 
@@ -199,7 +202,7 @@ class MetricContribution {
     required this.metricCode,
     required this.displayName,
     required this.beta,
-    required this.rawValue,
+    this.rawValue,
     required this.delta,
     required this.contribution,
   });
@@ -209,13 +212,14 @@ class MetricContribution {
         metricCode: json['metric_code'] as String,
         displayName: json['display_name'] as String,
         beta: (json['beta'] as num).toDouble(),
-        rawValue: json['raw_value'] as String,
+        rawValue: json['raw_value'] as String?,
         delta: (json['delta'] as num).toDouble(),
         contribution: (json['contribution'] as num).toDouble(),
       );
 }
 
 class SourceDisclosure {
+  // BE SourceDisclosureResponse.id는 Long(숫자)이다 → 문자열로 변환해 보관.
   final String id;
   final String title;
   final String filedAt;
@@ -230,7 +234,7 @@ class SourceDisclosure {
 
   factory SourceDisclosure.fromJson(Map<String, dynamic> json) =>
       SourceDisclosure(
-        id: json['id'] as String,
+        id: json['id'].toString(),
         title: json['title'] as String,
         filedAt: json['filed_at'] as String,
         dartUrl: json['dart_url'] as String,
@@ -245,7 +249,8 @@ class ReportDetail {
   final AppliedTheme? appliedTheme;
   final SourceDisclosure? sourceDisclosure;
   final String summary;
-  final double expectedCar;
+  // BE ReportDetailResponse.expected_car는 nullable(Double).
+  final double? expectedCar;
   final double? carLower;
   final double? carUpper;
   final List<MetricContribution> metricContributions;
@@ -275,8 +280,8 @@ class ReportDetail {
     return ReportDetail(
       id: data['id'] as int,
       ticker: data['ticker'] as String,
-      name: data['name'] as String,
-      title: data['title'] as String,
+      name: (data['name'] as String?) ?? (data['ticker'] as String),
+      title: (data['title'] as String?) ?? '',
       appliedTheme: data['applied_theme'] != null
           ? AppliedTheme.fromJson(
               data['applied_theme'] as Map<String, dynamic>)
@@ -285,8 +290,8 @@ class ReportDetail {
           ? SourceDisclosure.fromJson(
               data['source_disclosure'] as Map<String, dynamic>)
           : null,
-      summary: data['summary'] as String,
-      expectedCar: (data['expected_car'] as num).toDouble(),
+      summary: (data['summary'] as String?) ?? '',
+      expectedCar: (data['expected_car'] as num?)?.toDouble(),
       carLower: data['car_lower'] != null
           ? (data['car_lower'] as num).toDouble()
           : null,
