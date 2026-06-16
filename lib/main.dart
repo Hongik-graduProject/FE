@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import 'services/api_service.dart';
 import 'services/auth_provider.dart';
+import 'services/fcm_service.dart';
 import 'utils/app_theme.dart';
 
 // 화면 imports
@@ -15,13 +16,18 @@ import 'screens/home_screen.dart';
 import 'screens/company/company_detail_screen.dart';
 import 'screens/company/report_detail_screen.dart';
 import 'screens/folder/folder_detail_screen.dart';
+import 'screens/notifications_screen.dart';
+import 'screens/search_screen.dart';
 import 'screens/settings_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // API 서비스 초기화 (Dio 인터셉터 등록)
   ApiService().init();
+
+  // FCM 초기화 — Firebase 콘솔 설정이 없으면 조용히 skip (앱은 정상 동작).
+  await FcmService().initialize();
 
   runApp(const DisclosureApp());
 }
@@ -53,6 +59,8 @@ class DisclosureApp extends StatelessWidget {
           '/company': (context) => const CompanyDetailScreen(),
           '/report': (context) => const ReportDetailScreen(),
           '/folder': (context) => const FolderDetailScreen(),
+          '/notifications': (context) => const NotificationsScreen(),
+          '/search': (context) => const SearchScreen(),
           '/settings': (context) => const SettingsScreen(),
         },
       ),
