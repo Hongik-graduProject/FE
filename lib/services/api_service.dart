@@ -393,6 +393,18 @@ class ApiService {
     }
   }
 
+  /// §4-11 GET /stocks/{ticker}/prices — 일별 시세 (최근 N일).
+  Future<StockDailyPriceResponse> getStockDailyPrices(String ticker,
+      {int days = 30}) async {
+    try {
+      final r = await _dio.get('/stocks/$ticker/prices',
+          queryParameters: {'days': days});
+      return StockDailyPriceResponse.fromJson(r.data);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   // ──────────────────────────────────────────
   // 분석 API (W-15, W-16)
   // ──────────────────────────────────────────

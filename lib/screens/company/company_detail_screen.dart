@@ -1,4 +1,5 @@
 // lib/screens/company/company_detail_screen.dart — W-11~15 기업 상세 (탭 쉘)
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../models/stock_model.dart';
@@ -230,7 +231,8 @@ class _InfoTab extends StatefulWidget {
 
 class _InfoTabState extends State<_InfoTab>
     with AutomaticKeepAliveClientMixin {
-  late Future<StockDetailResponse> _future;
+  late Future<StockDetailResponse> _detailFuture;
+  late Future<StockDailyPriceResponse> _pricesFuture;
 
   @override
   bool get wantKeepAlive => true;
@@ -238,14 +240,15 @@ class _InfoTabState extends State<_InfoTab>
   @override
   void initState() {
     super.initState();
-    _future = ApiService().getStockDetail(widget.ticker);
+    _detailFuture = ApiService().getStockDetail(widget.ticker);
+    _pricesFuture = ApiService().getStockDailyPrices(widget.ticker, days: 30);
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
     return FutureBuilder<StockDetailResponse>(
-      future: _future,
+      future: _detailFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -254,31 +257,222 @@ class _InfoTabState extends State<_InfoTab>
           return _Err(message: snapshot.error.toString());
         }
         final s = snapshot.data!;
+        final isUp = (s.changeRate ?? 0) >= 0;
+        final color =
+            isUp ? const Color(0xFFE53935) : const Color(0xFF1976D2);
+
         return ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           children: [
+            // 한 줄 소개
+            if (s.description != null && s.description!.isNotEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5FF),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  s.description!,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF1A237E),
+                    height: 1.45,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            const SizedBox(height: 16),
+
+            // 가격 요약
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  s.currentPrice != null
+                      ? '₩${_n(s.currentPrice!)}'
+                      : '-',
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w800,
+                    color: color,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                if (s.changeRate != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text(
+                      '${isUp ? '▲' : '▼'} '
+                      '${s.changeAmount != null ? _n(s.changeAmount!.abs()) : ''} '
+                      '(${s.changeRate!.abs().toStringAsFixed(2)}%)',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: color,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 18),
+
+            // 주가 차트 (30일)
+            const Text('최근 30 거래일',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 220,
+              child: FutureBuilder<StockDailyPriceResponse>(
+                future: _pricesFuture,
+                builder: (context, snap) {
+                  if (snap.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                        child: CircularProgressIndicator(strokeWidth: 2));
+                  }
+                  if (snap.hasError) {
+                    return _Err(message: snap.error.toString());
+                  }
+                  final items = snap.data!.items;
+                  if (items.isEmpty) {
+                    return const _Empty(label: '주가 데이터가 없습니다');
+                  }
+                  return _PriceChart(items: items);
+                },
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // 기본 정보
+            const Text('기본 정보',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 6),
             _kv('종목 코드', s.ticker),
             _kv('이름', s.name),
             _kv('시장', s.market),
             if (s.category != null) _kv('업종', s.category!),
             if (s.listedAt != null) _kv('상장일', s.listedAt!),
-            if (s.currentPrice != null) _kv('현재가', '₩${_n(s.currentPrice!)}'),
-            if (s.changeRate != null)
-              _kv('등락률', '${s.changeRate!.toStringAsFixed(2)}%'),
-            if (s.description != null && s.description!.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              const Text('소개',
-                  style:
-                      TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 6),
-              Text(s.description!,
-                  style: const TextStyle(
-                      fontSize: 13, color: Color(0xFF374151), height: 1.4)),
-            ],
           ],
         );
       },
     );
+  }
+}
+
+// ─── Price Chart ─────────────────────────────────────────────────────────────
+
+class _PriceChart extends StatelessWidget {
+  final List<StockDailyPriceItem> items;
+  const _PriceChart({required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    // 데이터는 최신→과거 순으로 들어옴 → x축은 과거→최신.
+    final ordered = items.reversed.toList();
+    final spots = <FlSpot>[];
+    for (int i = 0; i < ordered.length; i++) {
+      spots.add(FlSpot(i.toDouble(), ordered[i].close.toDouble()));
+    }
+    final minY = ordered.map((e) => e.close).reduce((a, b) => a < b ? a : b);
+    final maxY = ordered.map((e) => e.close).reduce((a, b) => a > b ? a : b);
+    final pad = ((maxY - minY) * 0.08).round().toDouble();
+    final isUp = ordered.last.close >= ordered.first.close;
+    final lineColor =
+        isUp ? const Color(0xFFE53935) : const Color(0xFF1976D2);
+
+    return LineChart(
+      LineChartData(
+        minY: (minY - pad).toDouble(),
+        maxY: (maxY + pad).toDouble(),
+        gridData: const FlGridData(
+          show: true,
+          drawVerticalLine: false,
+        ),
+        titlesData: FlTitlesData(
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 50,
+              getTitlesWidget: (v, meta) => Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: Text(
+                  '₩${_compact(v)}',
+                  style: const TextStyle(
+                      fontSize: 10, color: Color(0xFF6B7280)),
+                ),
+              ),
+            ),
+          ),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 24,
+              interval: (ordered.length / 5).floorToDouble().clamp(1, 999),
+              getTitlesWidget: (v, meta) {
+                final i = v.toInt();
+                if (i < 0 || i >= ordered.length) return const SizedBox.shrink();
+                final d = ordered[i].date;
+                final short = d.length >= 10 ? d.substring(5) : d; // MM-dd
+                return Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(short,
+                      style: const TextStyle(
+                          fontSize: 9.5, color: Color(0xFF6B7280))),
+                );
+              },
+            ),
+          ),
+        ),
+        borderData: FlBorderData(
+          show: true,
+          border: const Border(
+            bottom: BorderSide(color: Color(0xFFE5E7EB)),
+            left: BorderSide(color: Color(0xFFE5E7EB)),
+          ),
+        ),
+        lineBarsData: [
+          LineChartBarData(
+            spots: spots,
+            isCurved: true,
+            curveSmoothness: 0.25,
+            color: lineColor,
+            barWidth: 2,
+            dotData: const FlDotData(show: false),
+            belowBarData: BarAreaData(
+              show: true,
+              color: lineColor.withValues(alpha: 0.10),
+            ),
+          ),
+        ],
+        lineTouchData: LineTouchData(
+          touchTooltipData: LineTouchTooltipData(
+            getTooltipItems: (spots) => spots
+                .map((s) {
+                  final i = s.x.toInt();
+                  if (i < 0 || i >= ordered.length) return null;
+                  final d = ordered[i];
+                  return LineTooltipItem(
+                    '${d.date}\n₩${_n(d.close)}',
+                    const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600),
+                  );
+                })
+                .toList(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  static String _compact(double v) {
+    if (v.abs() >= 100000000) return '${(v / 100000000).toStringAsFixed(1)}억';
+    if (v.abs() >= 10000) return '${(v / 10000).toStringAsFixed(1)}만';
+    return v.toInt().toString();
   }
 }
 
@@ -354,6 +548,8 @@ class _FinanceTab extends StatefulWidget {
 class _FinanceTabState extends State<_FinanceTab>
     with AutomaticKeepAliveClientMixin {
   late Future<StockFinanceResponse> _future;
+  String _sjDiv = 'CIS'; // CIS | BS | CF
+  String _periodType = 'QUARTERLY'; // QUARTERLY | ANNUAL
 
   @override
   bool get wantKeepAlive => true;
@@ -376,40 +572,317 @@ class _FinanceTabState extends State<_FinanceTab>
         if (snapshot.hasError) {
           return _Err(message: snapshot.error.toString());
         }
-        final items = snapshot.data!.items;
-        if (items.isEmpty) return const _Empty(label: '재무 데이터가 없습니다');
-        return ListView.builder(
-          padding: const EdgeInsets.all(12),
-          itemCount: items.length,
-          itemBuilder: (_, i) {
-            final f = items[i];
-            return Card(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('${f.period} (${f.periodType})',
-                        style: const TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 6),
-                    if (f.revenue != null) _kv('매출', '₩${_n(f.revenue!)}'),
-                    if (f.operatingProfit != null)
-                      _kv('영업이익', '₩${_n(f.operatingProfit!)}'),
-                    if (f.netIncome != null)
-                      _kv('순이익', '₩${_n(f.netIncome!)}'),
-                    if (f.per != null) _kv('PER', f.per!.toStringAsFixed(2)),
-                    if (f.pbr != null) _kv('PBR', f.pbr!.toStringAsFixed(2)),
-                  ],
-                ),
+        final all = snapshot.data!.items;
+        if (all.isEmpty) return const _Empty(label: '재무 데이터가 없습니다');
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _SjDivSelector(
+              value: _sjDiv,
+              onChanged: (v) => setState(() => _sjDiv = v),
+            ),
+            const SizedBox(height: 6),
+            _PeriodTypeSelector(
+              value: _periodType,
+              onChanged: (v) => setState(() => _periodType = v),
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: _FinancePivotTable(
+                items: all,
+                sjDiv: _sjDiv,
+                periodType: _periodType,
               ),
-            );
-          },
+            ),
+          ],
         );
       },
     );
   }
 }
+
+// ─── 재무 서브탭 (손익/재무/현금흐름) ───────────────────────────────────────────
+
+class _SjDivSelector extends StatelessWidget {
+  final String value;
+  final ValueChanged<String> onChanged;
+  const _SjDivSelector({required this.value, required this.onChanged});
+
+  static const _opts = [
+    ('CIS', '손익계산서'),
+    ('BS', '재무상태표'),
+    ('CF', '현금흐름표'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      child: Wrap(
+        spacing: 6,
+        children: _opts
+            .map((o) => ChoiceChip(
+                  label: Text(o.$2,
+                      style: const TextStyle(
+                          fontSize: 12, fontWeight: FontWeight.w600)),
+                  selected: value == o.$1,
+                  onSelected: (_) => onChanged(o.$1),
+                  selectedColor:
+                      const Color(0xFF1A237E).withValues(alpha: 0.12),
+                  showCheckmark: false,
+                ))
+            .toList(),
+      ),
+    );
+  }
+}
+
+class _PeriodTypeSelector extends StatelessWidget {
+  final String value;
+  final ValueChanged<String> onChanged;
+  const _PeriodTypeSelector({required this.value, required this.onChanged});
+
+  static const _opts = [
+    ('QUARTERLY', '분기'),
+    ('ANNUAL', '연간'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Row(
+        children: _opts
+            .map(
+              (o) => Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: OutlinedButton(
+                  onPressed: () => onChanged(o.$1),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(60, 30),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                    foregroundColor: value == o.$1
+                        ? Colors.white
+                        : const Color(0xFF374151),
+                    backgroundColor: value == o.$1
+                        ? const Color(0xFF1A237E)
+                        : Colors.transparent,
+                    side: BorderSide(
+                      color: value == o.$1
+                          ? const Color(0xFF1A237E)
+                          : const Color(0xFFD1D5DB),
+                    ),
+                  ),
+                  child: Text(o.$2,
+                      style: const TextStyle(
+                          fontSize: 12, fontWeight: FontWeight.w600)),
+                ),
+              ),
+            )
+            .toList(),
+      ),
+    );
+  }
+}
+
+// ─── 표 — 행=항목, 열=기간 ──────────────────────────────────────────────────
+
+typedef _Pick = String? Function(FinanceItem);
+
+class _Row {
+  final String label;
+  final _Pick pick;
+  final bool emphasis;
+  const _Row(this.label, this.pick, {this.emphasis = false});
+}
+
+class _FinancePivotTable extends StatelessWidget {
+  final List<FinanceItem> items;
+  final String sjDiv;
+  final String periodType;
+
+  const _FinancePivotTable({
+    required this.items,
+    required this.sjDiv,
+    required this.periodType,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cols = items
+        .where((f) => f.periodType == periodType && (f.sjDiv ?? 'CIS') == sjDiv)
+        .toList()
+      ..sort((a, b) => a.period.compareTo(b.period));
+
+    if (cols.isEmpty) {
+      return const _Empty(label: '선택한 구분의 데이터가 없습니다');
+    }
+
+    final rows = _rowsFor(sjDiv);
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.all(12),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          minWidth: MediaQuery.of(context).size.width - 24,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _headerRow(cols),
+            const Divider(height: 1, color: Color(0xFFE5E7EB)),
+            ...rows.map((r) => _dataRow(r, cols)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _headerRow(List<FinanceItem> cols) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          const SizedBox(
+            width: 140,
+            child: Text('항목',
+                style:
+                    TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+          ),
+          ...cols.map(
+            (c) => Container(
+              width: 90,
+              alignment: Alignment.centerRight,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text(c.period,
+                  style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1A237E))),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _dataRow(_Row r, List<FinanceItem> cols) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6))),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 140,
+            child: Text(
+              r.label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: r.emphasis ? FontWeight.w700 : FontWeight.w500,
+                color: const Color(0xFF111827),
+              ),
+            ),
+          ),
+          ...cols.map((c) {
+            final v = r.pick(c) ?? '-';
+            return Container(
+              width: 90,
+              alignment: Alignment.centerRight,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text(v,
+                  style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight:
+                          r.emphasis ? FontWeight.w700 : FontWeight.w500,
+                      color: _valueColor(v))),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  static Color _valueColor(String v) {
+    if (v.startsWith('-')) return const Color(0xFF1976D2);
+    return const Color(0xFF111827);
+  }
+
+  // ─── 항목 정의 ────────────────────────────────────────────────────────────
+
+  List<_Row> _rowsFor(String sj) {
+    switch (sj) {
+      case 'BS':
+        return [
+          _Row('유동자산', (f) => _money(f.currentAssets)),
+          _Row('비유동자산', (f) => _money(f.nonCurrentAssets)),
+          _Row('자산총계', (f) => _money(f.totalAssets), emphasis: true),
+          _Row('유동부채', (f) => _money(f.currentLiabilities)),
+          _Row('비유동부채', (f) => _money(f.nonCurrentLiabilities)),
+          _Row('부채총계', (f) => _money(f.totalLiabilities), emphasis: true),
+          _Row('자본금', (f) => _money(f.capitalStock)),
+          _Row('이익잉여금', (f) => _money(f.retainedEarnings)),
+          _Row('자본총계', (f) => _money(f.totalEquity), emphasis: true),
+        ];
+      case 'CF':
+        return [
+          _Row('영업활동 현금흐름', (f) => _money(f.operatingCashFlow), emphasis: true),
+          _Row('투자활동 현금흐름', (f) => _money(f.investingCashFlow)),
+          _Row('재무활동 현금흐름', (f) => _money(f.financingCashFlow)),
+          _Row('기말의 현금', (f) => _money(f.endingCash)),
+        ];
+      default: // CIS
+        return [
+          _Row('매출액', (f) => _money(f.revenue), emphasis: true),
+          _Row('매출원가', (f) => _money(f.costOfRevenue)),
+          _Row('매출총이익', (f) => _money(f.grossProfit), emphasis: true),
+          _Row('판매비와관리비', (f) => _money(f.sga)),
+          _Row('영업이익', (f) => _money(f.operatingProfit), emphasis: true),
+          _Row('영업외수익', (f) => _money(f.nonOperatingIncome)),
+          _Row('영업외비용', (f) => _money(f.nonOperatingExpense)),
+          _Row('세전이익', (f) => _money(f.pretaxIncome)),
+          _Row('법인세비용', (f) => _money(f.taxExpense)),
+          _Row('당기순이익', (f) => _money(f.netIncome), emphasis: true),
+          _Row('  지배주주순이익', (f) => _money(f.controllingNetIncome)),
+          _Row('  비지배주주순이익', (f) => _money(f.noncontrollingNetIncome)),
+          _Row('ROE', (f) => _pct(f.roe), emphasis: true),
+          _Row('ROA', (f) => _pct(f.roa), emphasis: true),
+          _Row('EPS', (f) => _intStr(f.eps)),
+          _Row('PER', (f) => _num(f.per), emphasis: true),
+          _Row('PBR', (f) => _num(f.pbr), emphasis: true),
+        ];
+    }
+  }
+}
+
+String? _money(int? v) {
+  if (v == null) return null;
+  // 100,000,000 단위 = 1억
+  if (v.abs() >= 100000000) {
+    final eok = (v / 100000000).round();
+    return '${_thousand(eok)}억';
+  }
+  if (v.abs() >= 10000) {
+    final man = (v / 10000).round();
+    return '${_thousand(man)}만';
+  }
+  return _thousand(v);
+}
+
+String _thousand(int v) =>
+    v.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+        (m) => '${m[1]},');
+
+String? _pct(double? v) =>
+    v == null ? null : '${v.toStringAsFixed(1)}%';
+
+String? _intStr(int? v) => v == null ? null : _thousand(v);
+
+String? _num(double? v) => v?.toStringAsFixed(2);
 
 // ─── Disclosures Tab (W-14) ─────────────────────────────────────────────────
 
