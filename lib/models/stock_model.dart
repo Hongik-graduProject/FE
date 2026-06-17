@@ -222,55 +222,129 @@ class StockNewsResponse {
   }
 }
 
-/// §4-9 재무 항목.
+/// §4-9 재무 항목 (sj_div = CIS/BS/CF, period = "2024" or "2024Q1" 등).
 class FinanceItem {
-  final String periodType;
-  final String period;
+  final String periodType; // ANNUAL | QUARTERLY
+  final String period; // "2024", "2024Q1", "2024H1", "2024Q3"
+  final String? sjDiv; // "CIS" | "BS" | "CF"
+  final String? fsDiv; // "CFS" | "OFS"
+
+  // 손익계산서
   final int? revenue;
   final int? costOfRevenue;
   final int? grossProfit;
+  final int? sga;
   final int? operatingProfit;
+  final int? nonOperatingIncome;
+  final int? nonOperatingExpense;
+  final int? pretaxIncome;
+  final int? taxExpense;
   final int? netIncome;
+  final int? controllingNetIncome;
+  final int? noncontrollingNetIncome;
+
+  // 재무상태표
+  final int? currentAssets;
+  final int? nonCurrentAssets;
   final int? totalAssets;
+  final int? currentLiabilities;
+  final int? nonCurrentLiabilities;
   final int? totalLiabilities;
+  final int? capitalStock;
+  final int? retainedEarnings;
   final int? totalEquity;
+
+  // 현금흐름표
+  final int? operatingCashFlow;
+  final int? investingCashFlow;
+  final int? financingCashFlow;
+  final int? endingCash;
+
+  // 비율
   final double? per;
   final double? pbr;
   final int? eps;
   final double? dividendYield;
+  final double? roe;
+  final double? roa;
 
   const FinanceItem({
     required this.periodType,
     required this.period,
+    this.sjDiv,
+    this.fsDiv,
     this.revenue,
     this.costOfRevenue,
     this.grossProfit,
+    this.sga,
     this.operatingProfit,
+    this.nonOperatingIncome,
+    this.nonOperatingExpense,
+    this.pretaxIncome,
+    this.taxExpense,
     this.netIncome,
+    this.controllingNetIncome,
+    this.noncontrollingNetIncome,
+    this.currentAssets,
+    this.nonCurrentAssets,
     this.totalAssets,
+    this.currentLiabilities,
+    this.nonCurrentLiabilities,
     this.totalLiabilities,
+    this.capitalStock,
+    this.retainedEarnings,
     this.totalEquity,
+    this.operatingCashFlow,
+    this.investingCashFlow,
+    this.financingCashFlow,
+    this.endingCash,
     this.per,
     this.pbr,
     this.eps,
     this.dividendYield,
+    this.roe,
+    this.roa,
   });
 
   factory FinanceItem.fromJson(Map<String, dynamic> json) => FinanceItem(
         periodType: json['period_type'] as String,
         period: json['period'] as String,
+        sjDiv: json['sj_div'] as String?,
+        fsDiv: json['fs_div'] as String?,
         revenue: (json['revenue'] as num?)?.toInt(),
         costOfRevenue: (json['cost_of_revenue'] as num?)?.toInt(),
         grossProfit: (json['gross_profit'] as num?)?.toInt(),
+        sga: (json['sga'] as num?)?.toInt(),
         operatingProfit: (json['operating_profit'] as num?)?.toInt(),
+        nonOperatingIncome: (json['non_operating_income'] as num?)?.toInt(),
+        nonOperatingExpense: (json['non_operating_expense'] as num?)?.toInt(),
+        pretaxIncome: (json['pretax_income'] as num?)?.toInt(),
+        taxExpense: (json['tax_expense'] as num?)?.toInt(),
         netIncome: (json['net_income'] as num?)?.toInt(),
+        controllingNetIncome:
+            (json['controlling_net_income'] as num?)?.toInt(),
+        noncontrollingNetIncome:
+            (json['noncontrolling_net_income'] as num?)?.toInt(),
+        currentAssets: (json['current_assets'] as num?)?.toInt(),
+        nonCurrentAssets: (json['non_current_assets'] as num?)?.toInt(),
         totalAssets: (json['total_assets'] as num?)?.toInt(),
+        currentLiabilities: (json['current_liabilities'] as num?)?.toInt(),
+        nonCurrentLiabilities:
+            (json['non_current_liabilities'] as num?)?.toInt(),
         totalLiabilities: (json['total_liabilities'] as num?)?.toInt(),
+        capitalStock: (json['capital_stock'] as num?)?.toInt(),
+        retainedEarnings: (json['retained_earnings'] as num?)?.toInt(),
         totalEquity: (json['total_equity'] as num?)?.toInt(),
+        operatingCashFlow: (json['operating_cash_flow'] as num?)?.toInt(),
+        investingCashFlow: (json['investing_cash_flow'] as num?)?.toInt(),
+        financingCashFlow: (json['financing_cash_flow'] as num?)?.toInt(),
+        endingCash: (json['ending_cash'] as num?)?.toInt(),
         per: (json['per'] as num?)?.toDouble(),
         pbr: (json['pbr'] as num?)?.toDouble(),
         eps: (json['eps'] as num?)?.toInt(),
         dividendYield: (json['dividend_yield'] as num?)?.toDouble(),
+        roe: (json['roe'] as num?)?.toDouble(),
+        roa: (json['roa'] as num?)?.toDouble(),
       );
 }
 
@@ -283,6 +357,55 @@ class StockFinanceResponse {
     return StockFinanceResponse(
       items: (data['items'] as List? ?? [])
           .map((e) => FinanceItem.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
+
+/// §4-11 일별 시세 항목.
+class StockDailyPriceItem {
+  final String date; // ISO yyyy-MM-dd
+  final int close;
+  final int change;
+  final int open;
+  final int high;
+  final int low;
+  final int volume;
+  final double? changeRate;
+
+  const StockDailyPriceItem({
+    required this.date,
+    required this.close,
+    required this.change,
+    required this.open,
+    required this.high,
+    required this.low,
+    required this.volume,
+    this.changeRate,
+  });
+
+  factory StockDailyPriceItem.fromJson(Map<String, dynamic> json) =>
+      StockDailyPriceItem(
+        date: json['date'] as String,
+        close: (json['close'] as num?)?.toInt() ?? 0,
+        change: (json['change'] as num?)?.toInt() ?? 0,
+        open: (json['open'] as num?)?.toInt() ?? 0,
+        high: (json['high'] as num?)?.toInt() ?? 0,
+        low: (json['low'] as num?)?.toInt() ?? 0,
+        volume: (json['volume'] as num?)?.toInt() ?? 0,
+        changeRate: (json['change_rate'] as num?)?.toDouble(),
+      );
+}
+
+class StockDailyPriceResponse {
+  final List<StockDailyPriceItem> items;
+  const StockDailyPriceResponse({required this.items});
+
+  factory StockDailyPriceResponse.fromJson(Map<String, dynamic> json) {
+    final data = json['data'] as Map<String, dynamic>;
+    return StockDailyPriceResponse(
+      items: (data['items'] as List? ?? [])
+          .map((e) => StockDailyPriceItem.fromJson(e as Map<String, dynamic>))
           .toList(),
     );
   }

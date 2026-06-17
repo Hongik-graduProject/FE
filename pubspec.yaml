@@ -34,6 +34,9 @@ dependencies:
   # 뉴스·공시 외부 링크 열기 (web에선 새 탭, mobile에선 외부 브라우저)
   url_launcher: ^6.3.1
 
+  # 종목 상세 정보 탭의 일별 주가 차트
+  fl_chart: ^0.69.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
