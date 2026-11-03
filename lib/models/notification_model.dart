@@ -15,6 +15,9 @@ class NotificationItem {
   final int? disclosureId;
   final bool isRead;
   final String createdAt;
+  // report_id 가 있을 때만 BE가 채운다 (보고서의 예상 CAR %, 적용 테마명).
+  final double? expectedCar;
+  final String? appliedThemeName;
 
   const NotificationItem({
     required this.id,
@@ -27,6 +30,8 @@ class NotificationItem {
     this.disclosureId,
     required this.isRead,
     required this.createdAt,
+    this.expectedCar,
+    this.appliedThemeName,
   });
 
   factory NotificationItem.fromJson(Map<String, dynamic> json) =>
@@ -41,6 +46,8 @@ class NotificationItem {
         disclosureId: (json['disclosure_id'] as num?)?.toInt(),
         isRead: json['is_read'] as bool? ?? false,
         createdAt: json['created_at'] as String? ?? '',
+        expectedCar: (json['expected_car'] as num?)?.toDouble(),
+        appliedThemeName: json['applied_theme_name'] as String?,
       );
 
   NotificationItem copyWith({bool? isRead}) => NotificationItem(
@@ -54,6 +61,8 @@ class NotificationItem {
         disclosureId: disclosureId,
         isRead: isRead ?? this.isRead,
         createdAt: createdAt,
+        expectedCar: expectedCar,
+        appliedThemeName: appliedThemeName,
       );
 }
 

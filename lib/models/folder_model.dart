@@ -20,6 +20,9 @@ class FolderItem {
   final double? changeRate;
   final int? changeAmount;
   final int unreadDisclosureCount;
+  final String? memo;
+  final int? avgPrice;
+  final AnalysisSummary? analysisSummary;
 
   const FolderItem({
     required this.id,
@@ -29,6 +32,9 @@ class FolderItem {
     this.changeRate,
     this.changeAmount,
     required this.unreadDisclosureCount,
+    this.memo,
+    this.avgPrice,
+    this.analysisSummary,
   });
 
   factory FolderItem.fromJson(Map<String, dynamic> json) => FolderItem(
@@ -39,6 +45,39 @@ class FolderItem {
         changeRate: (json['change_rate'] as num?)?.toDouble(),
         changeAmount: (json['change_amount'] as num?)?.toInt(),
         unreadDisclosureCount: json['unread_disclosure_count'] as int? ?? 0,
+        memo: json['memo'] as String?,
+        avgPrice: (json['avg_price'] as num?)?.toInt(),
+        analysisSummary: json['analysis_summary'] == null
+            ? null
+            : AnalysisSummary.fromJson(json['analysis_summary'] as Map<String, dynamic>),
+      );
+}
+
+/// 관심종목별 최신 ThemeSense 분석 요약. 분석이 없으면 has_theme=false 이고 나머지는 null.
+class AnalysisSummary {
+  final bool hasTheme;
+  final String? themeName;
+  final int? latestReportId;
+  final double? expectedCar;
+  final String? summary;
+  final DateTime? generatedAt;
+
+  const AnalysisSummary({
+    required this.hasTheme,
+    this.themeName,
+    this.latestReportId,
+    this.expectedCar,
+    this.summary,
+    this.generatedAt,
+  });
+
+  factory AnalysisSummary.fromJson(Map<String, dynamic> json) => AnalysisSummary(
+        hasTheme: json['has_theme'] as bool? ?? false,
+        themeName: (json['applied_theme'] as Map<String, dynamic>?)?['name'] as String?,
+        latestReportId: (json['latest_report_id'] as num?)?.toInt(),
+        expectedCar: (json['expected_car'] as num?)?.toDouble(),
+        summary: json['summary'] as String?,
+        generatedAt: DateTime.tryParse(json['generated_at'] as String? ?? ''),
       );
 }
 

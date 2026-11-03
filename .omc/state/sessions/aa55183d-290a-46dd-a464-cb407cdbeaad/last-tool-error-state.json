@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"SP=/private/tmp/claude-501/-Users-bagboseong-programing-26-ing-hongik-hongik-grad/aa55183d-290a-46dd-a464-cb407cdbeaad/scratchpad; tail -5 $SP/fe-run.log; cd /Users/bagboseong/programing/2...",
+  "error": "Exit code 1\nc Clear the screen\nq Quit (terminate the application on the device).\n\nA Dart VM Service on iPhone 17 is available at: http://127.0.0.1:59339/nTT_YWmyvko=/\nThe Flutter DevTools debugger and profiler on iPhone 17 is available at: http://127.0.0.1:59339/nTT_YWmyvko=/devtools/?uri=ws://127.0.0.1:59339/nTT_YWmyvko=/ws\nFlutter run key commands.",
+  "timestamp": "2026-11-02T16:25:38.754Z",
+  "retry_count": 1
+}

@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_provider.dart';
-import '../../utils/constants.dart';
+import '../../utils/design_tokens.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -72,77 +72,86 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final dim = Colors.white.withValues(alpha: 0.7);
     return Scaffold(
-      backgroundColor: const Color(AppConstants.primaryColor),
-      body: Center(
-        child: AnimatedBuilder(
-          animation: _animController,
-          builder: (context, child) {
-            return FadeTransition(
-              opacity: _fadeAnim,
-              child: ScaleTransition(
-                scale: _scaleAnim,
-                child: child,
-              ),
-            );
-          },
+      body: Container(
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [AppColors.brand, AppColors.brandPressed],
+          ),
+        ),
+        child: SafeArea(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // 로고 아이콘
-              Container(
-                width: 96,
-                height: 96,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.15),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
+              Expanded(
+                child: Center(
+                  child: FadeTransition(
+                    opacity: _fadeAnim,
+                    child: ScaleTransition(
+                      scale: _scaleAnim,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // 앱 마크
+                          Container(
+                            width: 104,
+                            height: 104,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(28),
+                              border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.2)),
+                              boxShadow: AppShadow.raised,
+                            ),
+                            child: const Icon(Icons.radar_rounded,
+                                size: 56, color: Colors.white),
+                          ),
+                          const SizedBox(height: AppSpace.xl),
+                          Text('공시레이더',
+                              style: AppText.headlineXl
+                                  .copyWith(color: Colors.white, fontSize: 32)),
+                          const SizedBox(height: AppSpace.sm),
+                          Text('내 종목의 공시를 10초 만에',
+                              style: AppText.bodyLg.copyWith(color: dim)),
+                          const SizedBox(height: AppSpace.lg),
+                          Wrap(
+                            spacing: AppSpace.sm,
+                            children: [
+                              for (final t in ['DART 전자공시', 'CAR 모형', '이상수익률'])
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                  child: Text(t,
+                                      style: AppText.labelMd
+                                          .copyWith(color: dim)),
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.bar_chart_rounded,
-                  size: 56,
-                  color: Color(AppConstants.primaryColor),
+                  ),
                 ),
               ),
-              const SizedBox(height: 24),
-
-              // 앱 이름
-              const Text(
-                '공시레이더',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.5,
-                ),
-              ),
-              const SizedBox(height: 8),
-
-              // 슬로건
-              Text(
-                '개인 투자자를 위한 공시 분석 앱',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.8),
-                  fontSize: 15,
-                ),
-              ),
-              const SizedBox(height: 64),
-
-              // 로딩 인디케이터
               SizedBox(
                 width: 24,
                 height: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  color: Colors.white.withValues(alpha: 0.7),
-                ),
+                child: CircularProgressIndicator(strokeWidth: 2.5, color: dim),
               ),
+              const SizedBox(height: AppSpace.xl),
+              Text(
+                '금융감독원 전자공시시스템(DART) Open API 연계',
+                style: AppText.labelSm
+                    .copyWith(color: Colors.white.withValues(alpha: 0.5)),
+              ),
+              const SizedBox(height: AppSpace.xl),
             ],
           ),
         ),

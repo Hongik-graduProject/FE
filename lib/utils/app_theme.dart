@@ -1,106 +1,138 @@
 // lib/utils/app_theme.dart
 import 'package:flutter/material.dart';
-import 'constants.dart';
+
+import 'design_tokens.dart';
 
 class AppTheme {
   static ThemeData get lightTheme {
+    final outline = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      borderSide: BorderSide.none,
+    );
     return ThemeData(
       useMaterial3: true,
+      // DESIGN.md 의 대체 글꼴 순서. iOS 는 Apple SD Gothic Neo 로 그려진다.
+      fontFamilyFallback: const ['Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic'],
       colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color(AppConstants.primaryColor),
-        brightness: Brightness.light,
+        seedColor: AppColors.brand,
+        primary: AppColors.brand,
+        secondary: AppColors.accent,
+        surface: AppColors.card,
+        error: AppColors.error,
       ),
-      scaffoldBackgroundColor: const Color(AppConstants.backgroundColor),
+      scaffoldBackgroundColor: AppColors.canvas,
+      splashFactory: InkRipple.splashFactory,
 
-      // AppBar
       appBarTheme: const AppBarTheme(
-        backgroundColor: Color(AppConstants.surfaceColor),
-        foregroundColor: Color(AppConstants.textPrimary),
+        backgroundColor: AppColors.canvas,
+        foregroundColor: AppColors.textPrimary,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
-        centerTitle: true,
-        titleTextStyle: TextStyle(
-          color: Color(AppConstants.textPrimary),
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-        ),
+        scrolledUnderElevation: 0,
+        centerTitle: false,
+        toolbarHeight: 56,
+        titleTextStyle: AppText.headlineMd,
       ),
 
-      // ElevatedButton
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(AppConstants.primaryColor),
+          backgroundColor: AppColors.brand,
           foregroundColor: Colors.white,
+          disabledBackgroundColor: AppColors.borderStrong,
+          disabledForegroundColor: Colors.white,
           minimumSize: const Size(double.infinity, 52),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
           elevation: 0,
-          textStyle: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
+          textStyle: AppText.labelLg.copyWith(fontSize: 15),
         ),
       ),
-
-      // OutlinedButton
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: const Color(AppConstants.primaryColor),
+          foregroundColor: AppColors.textPrimary,
           minimumSize: const Size(double.infinity, 52),
-          side: const BorderSide(color: Color(AppConstants.primaryColor), width: 1.5),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          textStyle: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
+          side: const BorderSide(color: AppColors.borderStrong),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+          textStyle: AppText.labelLg.copyWith(fontSize: 15),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.accent,
+          textStyle: AppText.labelLg,
         ),
       ),
 
-      // InputDecoration
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(AppConstants.surfaceColor),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(AppConstants.dividerColor)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(AppConstants.dividerColor)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(AppConstants.primaryColor), width: 2),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(AppConstants.errorColor)),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(AppConstants.errorColor), width: 2),
-        ),
-        hintStyle: const TextStyle(color: Color(AppConstants.textSecondary), fontSize: 15),
-        labelStyle: const TextStyle(color: Color(AppConstants.textSecondary)),
+        fillColor: AppColors.subtle,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        border: outline,
+        enabledBorder: outline,
+        focusedBorder: outline.copyWith(
+            borderSide: const BorderSide(color: AppColors.accent, width: 1.5)),
+        errorBorder: outline.copyWith(borderSide: const BorderSide(color: AppColors.error)),
+        focusedErrorBorder:
+            outline.copyWith(borderSide: const BorderSide(color: AppColors.error, width: 1.5)),
+        hintStyle: AppText.bodyMd.copyWith(color: AppColors.textTertiary),
+        labelStyle: AppText.labelMd,
+        errorStyle: AppText.labelSm.copyWith(color: AppColors.error),
       ),
 
-      // Card
       cardTheme: CardThemeData(
-        color: const Color(AppConstants.surfaceColor),
+        color: AppColors.card,
         elevation: 0,
+        margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: Color(AppConstants.dividerColor)),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          side: const BorderSide(color: AppColors.border),
         ),
       ),
 
-      // Divider
-      dividerTheme: const DividerThemeData(
-        color: Color(AppConstants.dividerColor),
-        thickness: 1,
+      tabBarTheme: const TabBarThemeData(
+        labelColor: AppColors.textPrimary,
+        unselectedLabelColor: AppColors.textTertiary,
+        labelStyle: AppText.labelLg,
+        unselectedLabelStyle: AppText.labelLg,
+        indicatorColor: AppColors.brand,
+        indicatorSize: TabBarIndicatorSize.label,
+        dividerColor: AppColors.border,
+      ),
+
+      chipTheme: ChipThemeData(
+        backgroundColor: AppColors.card,
+        selectedColor: AppColors.brand,
+        side: const BorderSide(color: AppColors.border),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+        labelStyle: AppText.labelMd,
+      ),
+
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: AppColors.textPrimary,
+        contentTextStyle: AppText.bodyMd.copyWith(color: Colors.white),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+      ),
+
+      dialogTheme: DialogThemeData(
+        backgroundColor: AppColors.card,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lg)),
+        titleTextStyle: AppText.headlineMd,
+      ),
+
+      dividerTheme: const DividerThemeData(color: AppColors.border, thickness: 1, space: 1),
+
+      navigationBarTheme: NavigationBarThemeData(
+        height: 64,
+        backgroundColor: AppColors.card,
+        surfaceTintColor: Colors.transparent,
+        indicatorColor: Colors.transparent,
+        labelTextStyle: WidgetStateProperty.resolveWith((s) => AppText.labelSm.copyWith(
+            color: s.contains(WidgetState.selected) ? AppColors.brand : AppColors.textTertiary,
+            fontWeight: s.contains(WidgetState.selected) ? FontWeight.w700 : FontWeight.w500)),
+        iconTheme: WidgetStateProperty.resolveWith((s) => IconThemeData(
+            size: 24,
+            color: s.contains(WidgetState.selected) ? AppColors.brand : AppColors.textTertiary)),
       ),
     );
   }

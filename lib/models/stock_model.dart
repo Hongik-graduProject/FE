@@ -149,6 +149,13 @@ class StockDetailResponse {
   final double? changeRate;
   final int? changeAmount;
   final bool isFavorite;
+  // 핵심 투자 지표 — 네이버 조회 실패 시 null.
+  final int? marketCap; // 원
+  final double? per;
+  final double? pbr;
+  final double? dividendYield; // %
+  final int? high52w;
+  final int? low52w;
 
   const StockDetailResponse({
     required this.ticker,
@@ -161,6 +168,12 @@ class StockDetailResponse {
     this.changeRate,
     this.changeAmount,
     required this.isFavorite,
+    this.marketCap,
+    this.per,
+    this.pbr,
+    this.dividendYield,
+    this.high52w,
+    this.low52w,
   });
 
   factory StockDetailResponse.fromJson(Map<String, dynamic> json) {
@@ -176,6 +189,12 @@ class StockDetailResponse {
       changeRate: (data['change_rate'] as num?)?.toDouble(),
       changeAmount: (data['change_amount'] as num?)?.toInt(),
       isFavorite: data['is_favorite'] as bool? ?? false,
+      marketCap: (data['market_cap'] as num?)?.toInt(),
+      per: (data['per'] as num?)?.toDouble(),
+      pbr: (data['pbr'] as num?)?.toDouble(),
+      dividendYield: (data['dividend_yield'] as num?)?.toDouble(),
+      high52w: (data['high_52w'] as num?)?.toInt(),
+      low52w: (data['low_52w'] as num?)?.toInt(),
     );
   }
 }
@@ -418,6 +437,9 @@ class StockDisclosureItem {
   final String type;
   final String filedAt;
   final String? dartUrl;
+  // 이 공시로 만든 분석 보고서. 아직 없으면 null.
+  final int? reportId;
+  final double? expectedCar;
 
   const StockDisclosureItem({
     required this.id,
@@ -425,6 +447,8 @@ class StockDisclosureItem {
     required this.type,
     required this.filedAt,
     this.dartUrl,
+    this.reportId,
+    this.expectedCar,
   });
 
   factory StockDisclosureItem.fromJson(Map<String, dynamic> json) =>
@@ -434,6 +458,8 @@ class StockDisclosureItem {
         type: json['type'] as String? ?? '',
         filedAt: json['filed_at'] as String? ?? '',
         dartUrl: json['dart_url'] as String?,
+        reportId: json['report_id'] as int?,
+        expectedCar: (json['expected_car'] as num?)?.toDouble(),
       );
 }
 

@@ -1,0 +1,215 @@
+{
+  "updatedAt": "2026-11-03T10:14:29.708Z",
+  "missions": [
+    {
+      "id": "session:aa55183d-290a-46dd-a464-cb407cdbeaad:none",
+      "source": "session",
+      "name": "none",
+      "objective": "Session mission",
+      "createdAt": "2026-11-01T06:23:01.763Z",
+      "updatedAt": "2026-11-03T10:14:29.708Z",
+      "status": "done",
+      "workerCount": 10,
+      "taskCounts": {
+        "total": 10,
+        "pending": 0,
+        "blocked": 0,
+        "inProgress": 0,
+        "completed": 10,
+        "failed": 0
+      },
+      "agents": [
+        {
+          "name": "be-worker:abe-wor",
+          "role": "be-worker",
+          "ownership": "abe-worker-1f675ac4782955da",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-11-03T10:14:29.708Z"
+        },
+        {
+          "name": "fe-worker:afe-wor",
+          "role": "fe-worker",
+          "ownership": "afe-worker-f723db464c8083ea",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-11-01T06:24:10.473Z"
+        },
+        {
+          "name": "fe-inventory:afe-inv",
+          "role": "fe-inventory",
+          "ownership": "afe-inventory-3c11ce79387ab633",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-11-02T12:49:10.064Z"
+        },
+        {
+          "name": "product-brief:aproduc",
+          "role": "product-brief",
+          "ownership": "aproduct-brief-7909f138f2932310",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-11-02T12:48:51.704Z"
+        },
+        {
+          "name": "rd-auth:ard-aut",
+          "role": "rd-auth",
+          "ownership": "ard-auth-deeb8c7bf8db9015",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-11-02T13:31:36.066Z"
+        },
+        {
+          "name": "rd-stock:ard-sto",
+          "role": "rd-stock",
+          "ownership": "ard-stock-f0b655c3993f8f99",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-11-02T13:35:34.730Z"
+        },
+        {
+          "name": "rd-analysis:ard-ana",
+          "role": "rd-analysis",
+          "ownership": "ard-analysis-362033c486ab7f8e",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-11-02T13:31:11.198Z"
+        },
+        {
+          "name": "rd-home:ard-hom",
+          "role": "rd-home",
+          "ownership": "ard-home-2ee42da371a11ba6",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-11-02T13:33:38.783Z"
+        },
+        {
+          "name": "rd-my:ard-my-",
+          "role": "rd-my",
+          "ownership": "ard-my-7bb47d82561a64a9",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-11-02T13:33:51.448Z"
+        },
+        {
+          "name": "rd-reviewer:ard-rev",
+          "role": "rd-reviewer",
+          "ownership": "ard-reviewer-b4be1bcffb3a9321",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-11-02T16:17:16.830Z"
+        }
+      ],
+      "timeline": [
+        {
+          "id": "session-stop:ard-my-7bb47d82561a64a9:2026-11-02T13:33:51.448Z",
+          "at": "2026-11-02T13:33:51.448Z",
+          "kind": "completion",
+          "agent": "rd-my:ard-my-",
+          "detail": "completed",
+          "sourceKey": "session-stop:ard-my-7bb47d82561a64a9"
+        },
+        {
+          "id": "session-stop:ard-stock-f0b655c3993f8f99:2026-11-02T13:35:34.730Z",
+          "at": "2026-11-02T13:35:34.730Z",
+          "kind": "completion",
+          "agent": "rd-stock:ard-sto",
+          "detail": "completed",
+          "sourceKey": "session-stop:ard-stock-f0b655c3993f8f99"
+        },
+        {
+          "id": "session-start:ard-reviewer-b4be1bcffb3a9321:2026-11-02T16:15:40.563Z",
+          "at": "2026-11-02T16:15:40.563Z",
+          "kind": "update",
+          "agent": "rd-reviewer:ard-rev",
+          "detail": "started rd-reviewer:ard-rev",
+          "sourceKey": "session-start:ard-reviewer-b4be1bcffb3a9321"
+        },
+        {
+          "id": "session-stop:a5186584c5d41cebd:2026-11-02T16:16:00.143Z",
+          "at": "2026-11-02T16:16:00.143Z",
+          "kind": "completion",
+          "agent": "be-worker:abe-wor",
+          "detail": "completed",
+          "sourceKey": "session-stop:a5186584c5d41cebd"
+        },
+        {
+          "id": "session-stop:ard-reviewer-b4be1bcffb3a9321:2026-11-02T16:17:16.830Z",
+          "at": "2026-11-02T16:17:16.830Z",
+          "kind": "completion",
+          "agent": "rd-reviewer:ard-rev",
+          "detail": "completed",
+          "sourceKey": "session-stop:ard-reviewer-b4be1bcffb3a9321"
+        },
+        {
+          "id": "session-stop:a668625ebee19261f:2026-11-02T16:22:31.930Z",
+          "at": "2026-11-02T16:22:31.930Z",
+          "kind": "completion",
+          "agent": "be-worker:abe-wor",
+          "detail": "completed",
+          "sourceKey": "session-stop:a668625ebee19261f"
+        },
+        {
+          "id": "session-stop:a7ed44a4119dc90ed:2026-11-02T16:44:50.101Z",
+          "at": "2026-11-02T16:44:50.101Z",
+          "kind": "completion",
+          "agent": "be-worker:abe-wor",
+          "detail": "completed",
+          "sourceKey": "session-stop:a7ed44a4119dc90ed"
+        },
+        {
+          "id": "session-stop:a09eadf9f253dfeec:2026-11-02T16:48:12.358Z",
+          "at": "2026-11-02T16:48:12.358Z",
+          "kind": "completion",
+          "agent": "be-worker:abe-wor",
+          "detail": "completed",
+          "sourceKey": "session-stop:a09eadf9f253dfeec"
+        },
+        {
+          "id": "session-stop:ae585c80e3369a194:2026-11-02T17:40:24.275Z",
+          "at": "2026-11-02T17:40:24.275Z",
+          "kind": "completion",
+          "agent": "be-worker:abe-wor",
+          "detail": "completed",
+          "sourceKey": "session-stop:ae585c80e3369a194"
+        },
+        {
+          "id": "session-stop:af00c0880a4db6f58:2026-11-03T10:10:27.893Z",
+          "at": "2026-11-03T10:10:27.893Z",
+          "kind": "completion",
+          "agent": "be-worker:abe-wor",
+          "detail": "completed",
+          "sourceKey": "session-stop:af00c0880a4db6f58"
+        },
+        {
+          "id": "session-stop:ae3a03015fa120169:2026-11-03T10:14:29.708Z",
+          "at": "2026-11-03T10:14:29.708Z",
+          "kind": "completion",
+          "agent": "be-worker:abe-wor",
+          "detail": "completed",
+          "sourceKey": "session-stop:ae3a03015fa120169"
+        }
+      ]
+    }
+  ]
+}

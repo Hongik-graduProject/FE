@@ -4,8 +4,10 @@ import '../utils/constants.dart';
 import '../models/auth_model.dart';
 import '../models/analysis_model.dart';
 import '../models/folder_model.dart';
+import '../models/market_model.dart';
 import '../models/notification_model.dart';
 import '../models/stock_model.dart';
+import '../models/theme_model.dart';
 import 'token_service.dart';
 
 class ApiService {
@@ -274,12 +276,14 @@ class ApiService {
   }
 
   /// §3-7 POST /folders/items — 종목을 폴더에 즐겨찾기 등록.
-  Future<void> addFavorite(int folderId, String ticker) async {
+  /// 새로 만든 관심 항목 id 를 돌려준다 (이동·삭제에 쓴다).
+  Future<int> addFavorite(int folderId, String ticker) async {
     try {
-      await _dio.post(
+      final response = await _dio.post(
         '/folders/items',
         data: {'folder_id': folderId, 'ticker': ticker},
       );
+      return (response.data['data'] as Map<String, dynamic>)['id'] as int;
     } on DioException catch (e) {
       throw _handleError(e);
     }
@@ -419,6 +423,16 @@ class ApiService {
     }
   }
 
+  /// W-15: 종목 ML 예측(60거래일 KOSPI 대비 초과수익률) 조회
+  Future<PredictionResponse> getStockPrediction(String ticker) async {
+    try {
+      final response = await _dio.get('/analysis/$ticker/prediction');
+      return PredictionResponse.fromJson(response.data);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   /// W-15: 종목 분석 보고서 목록 조회
   Future<ReportsResponse> getStockReports(
     String ticker, {
@@ -516,6 +530,42 @@ class ApiService {
         '/notifications/fcm-token',
         data: {'device_token': deviceToken},
       );
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // ──────────────────────────────────────────
+  // 테마 둘러보기 / 시장 요약
+  // ──────────────────────────────────────────
+
+  /// GET /themes — 전체 테마 (종목 수 많은 순).
+  Future<ThemeListResponse> getThemes() async {
+    try {
+      final r = await _dio.get('/themes');
+      return ThemeListResponse.fromJson(r.data);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// GET /themes/{theme_id}/stocks — 이 테마가 1순위인 종목 (일치도 높은 순).
+  Future<ThemeStocksResponse> getThemeStocks(int themeId,
+      {int page = 1, int size = 20}) async {
+    try {
+      final r = await _dio.get('/themes/$themeId/stocks',
+          queryParameters: {'page': page, 'size': size});
+      return ThemeStocksResponse.fromJson(r.data);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// GET /market/summary — 코스피·코스닥 지수, 최근 공시 수, 공시 많은 종목.
+  Future<MarketSummary> getMarketSummary() async {
+    try {
+      final r = await _dio.get('/market/summary');
+      return MarketSummary.fromJson(r.data);
     } on DioException catch (e) {
       throw _handleError(e);
     }

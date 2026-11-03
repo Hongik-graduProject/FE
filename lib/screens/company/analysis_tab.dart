@@ -2,6 +2,9 @@
 import 'package:flutter/material.dart';
 import '../../models/analysis_model.dart';
 import '../../services/api_service.dart';
+import '../../utils/design_tokens.dart';
+import '../../utils/format.dart';
+import '../../widgets/ds.dart';
 
 class AnalysisTab extends StatefulWidget {
   final String ticker;
@@ -14,7 +17,9 @@ class AnalysisTab extends StatefulWidget {
 
 class _AnalysisTabState extends State<AnalysisTab>
     with AutomaticKeepAliveClientMixin {
-  late Future<(ThemesResponse, ReportsResponse)> _future;
+  late Future<ThemesResponse> _themesFuture;
+  late Future<PredictionResponse?> _predFuture;
+  late Future<ReportsResponse> _reportsFuture;
 
   @override
   bool get wantKeepAlive => true;
@@ -26,596 +31,371 @@ class _AnalysisTabState extends State<AnalysisTab>
   }
 
   void _loadData() {
-    _future = Future.wait([
-      ApiService().getStockThemes(widget.ticker),
-      ApiService().getStockReports(widget.ticker),
-    ]).then((results) => (results[0] as ThemesResponse, results[1] as ReportsResponse));
+    // 섹션마다 따로 불러온다: 보고서는 첫 조회 때 생성돼 1~2초 걸리므로 테마 카드를 막지 않는다.
+    _themesFuture = ApiService().getStockThemes(widget.ticker);
+    // 섹션마다 FutureBuilder 가 따로 있어 예측 실패가 다른 섹션을 막지 않는다. 실패는 그 카드에서 다시 시도한다.
+    _predFuture = ApiService().getStockPrediction(widget.ticker);
+    _reportsFuture = ApiService().getStockReports(widget.ticker);
+  }
+
+  Future<void> _refresh() async {
+    setState(_loadData);
+    await Future.wait([
+      _themesFuture.then((_) {}, onError: (_) {}),
+      _predFuture.then((_) {}, onError: (_) {}),
+      _reportsFuture.then((_) {}, onError: (_) {}),
+    ]);
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return FutureBuilder<(ThemesResponse, ReportsResponse)>(
-      future: _future,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError) {
-          return _ErrorState(
-            message: snapshot.error.toString(),
-            onRetry: () => setState(_loadData),
-          );
-        }
-        final (themes, reports) = snapshot.data!;
-        return RefreshIndicator(
-          onRefresh: () async => setState(_loadData),
-          child: ListView(
-            padding: const EdgeInsets.all(14),
+    return RefreshIndicator(
+      onRefresh: _refresh,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(
+            AppSpace.lg, AppSpace.lg, AppSpace.lg, 0),
+        children: [
+          FutureBuilder<ThemesResponse>(
+            future: _themesFuture,
+            builder: (context, snap) {
+              if (snap.connectionState == ConnectionState.waiting) {
+                return const SkeletonBox(height: 220, radius: AppRadius.lg);
+              }
+              if (snap.hasError) {
+                return DsCard(
+                  child: ErrorRetry(
+                    message: snap.error.toString(),
+                    onRetry: () => setState(() => _themesFuture =
+                        ApiService().getStockThemes(widget.ticker)),
+                  ),
+                );
+              }
+              return _ThemeCard(res: snap.data!);
+            },
+          ),
+          const SizedBox(height: AppSpace.md),
+          _PredictionSection(
+            future: _predFuture,
+            onRetry: () => setState(
+                () => _predFuture = ApiService().getStockPrediction(widget.ticker)),
+          ),
+          const SizedBox(height: AppSpace.xl),
+          const SectionTitle('공시 분석 보고서'),
+          FutureBuilder<ReportsResponse>(
+            future: _reportsFuture,
+            builder: (context, snap) {
+              if (snap.connectionState == ConnectionState.waiting) {
+                return const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.only(bottom: AppSpace.sm),
+                      child: Text('공시를 분석하고 있어요', style: AppText.labelSm),
+                    ),
+                    SkeletonList(itemHeight: 76),
+                  ],
+                );
+              }
+              if (snap.hasError) {
+                return ErrorRetry(
+                  message: snap.error.toString(),
+                  onRetry: () => setState(() => _reportsFuture =
+                      ApiService().getStockReports(widget.ticker)),
+                );
+              }
+              final reports = snap.data!.reports;
+              if (reports.isEmpty) {
+                return const EmptyState(
+                  icon: Icons.description_outlined,
+                  title: '최근 공시가 없어 분석 보고서가 없어요',
+                );
+              }
+              return Column(
+                children: [
+                  for (final r in reports) ...[
+                    _ReportRow(report: r),
+                    const SizedBox(height: AppSpace.sm + 4),
+                  ],
+                ],
+              );
+            },
+          ),
+          const Disclaimer(),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── 테마 카드 ────────────────────────────────────────────────────────────────
+
+class _ThemeCard extends StatelessWidget {
+  final ThemesResponse res;
+  const _ThemeCard({required this.res});
+
+  @override
+  Widget build(BuildContext context) {
+    if (!res.hasThemes) {
+      return DsCard(
+        child: EmptyState(
+          icon: Icons.hourglass_empty_rounded,
+          title: '테마 분류 대기 중',
+          message: res.message ?? 'ThemeSense 학습 대상이 아닌 종목이에요',
+        ),
+      );
+    }
+    final primary = res.themes.first;
+    final others = res.themes.skip(1).toList();
+    final metrics = primary.topSensitiveMetrics ?? const <SensitiveMetric>[];
+    final maxAbs = metrics.fold<double>(
+        0, (m, e) => e.beta.abs() > m ? e.beta.abs() : m);
+
+    return DsCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(children: [
+            Text('테마', style: AppText.headlineSm),
+            Spacer(),
+            DemoTag(),
+          ]),
+          const SizedBox(height: AppSpace.md),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              _ThemeSection(themesResponse: themes),
-              const SizedBox(height: 14),
-              _ReportSection(ticker: widget.ticker, reportsResponse: reports),
-              const SizedBox(height: 20),
+              Expanded(child: Text(primary.name, style: AppText.headlineMd)),
+              Text(
+                '${(primary.probability * 100).round()}%',
+                style: AppText.numericMetric.copyWith(color: AppColors.accent),
+              ),
             ],
           ),
-        );
+          const SizedBox(height: AppSpace.sm),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: primary.probability.clamp(0.0, 1.0),
+              minHeight: 6,
+              backgroundColor: AppColors.subtle,
+              valueColor: const AlwaysStoppedAnimation(AppColors.accent),
+            ),
+          ),
+          if (others.isNotEmpty) ...[
+            const SizedBox(height: AppSpace.sm + 4),
+            Wrap(
+              spacing: AppSpace.sm,
+              runSpacing: AppSpace.sm,
+              children: [
+                for (final t in others)
+                  DsPill(
+                    '#${t.rank} ${t.name} ${(t.probability * 100).round()}%',
+                    background: AppColors.subtle,
+                    foreground: AppColors.textSecondary,
+                  ),
+              ],
+            ),
+          ],
+          if (metrics.isNotEmpty) ...[
+            const SizedBox(height: AppSpace.lg),
+            const Divider(height: 1, color: AppColors.border),
+            const SizedBox(height: AppSpace.md),
+            const Row(children: [
+              Text('핵심 민감 지표', style: AppText.labelLg),
+              SizedBox(width: 4),
+              InfoButton(
+                title: 'β(민감도)란?',
+                body: '이 지표가 1%p 변할 때 공시 반응(CAR)이 얼마나 움직이는지를 나타내요. '
+                    '플러스면 지표가 오를수록 반응이 커지고, 마이너스면 작아져요.',
+              ),
+            ]),
+            const SizedBox(height: AppSpace.sm + 4),
+            for (final m in metrics) _BetaRow(metric: m, maxAbs: maxAbs),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _BetaRow extends StatelessWidget {
+  final SensitiveMetric metric;
+  final double maxAbs;
+  const _BetaRow({required this.metric, required this.maxAbs});
+
+  @override
+  Widget build(BuildContext context) {
+    final b = metric.beta;
+    final sign = b > 0 ? '+' : (b < 0 ? '-' : '');
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpace.sm + 2),
+      child: Row(children: [
+        SizedBox(
+          width: 88,
+          child: Text(metric.displayName,
+              style: AppText.bodySm, overflow: TextOverflow.ellipsis),
+        ),
+        Expanded(child: ContributionBar(value: b, maxAbs: maxAbs, height: 6)),
+        const SizedBox(width: AppSpace.sm + 4),
+        SizedBox(
+          width: 56,
+          child: Text(
+            'β $sign${b.abs().toStringAsFixed(2)}',
+            textAlign: TextAlign.right,
+            style: AppText.labelMd.copyWith(
+                color: AppColors.market(b),
+                fontFeatures: AppText.numeric.fontFeatures),
+          ),
+        ),
+      ]),
+    );
+  }
+}
+
+// ─── ML 60거래일 전망 ─────────────────────────────────────────────────────────
+
+class _PredictionSection extends StatelessWidget {
+  final Future<PredictionResponse?> future;
+  final VoidCallback onRetry;
+  const _PredictionSection({required this.future, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<PredictionResponse?>(
+      future: future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SkeletonBox(height: 180, radius: AppRadius.lg);
+        }
+        if (snapshot.hasError) {
+          return DsCard(
+            outlined: true,
+            child: ErrorRetry(message: snapshot.error.toString(), onRetry: onRetry),
+          );
+        }
+        final p = snapshot.data;
+        if (p == null || !p.available) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpace.sm),
+            child: Text('이 종목은 ML 예측 대상이 아니에요',
+                style: AppText.bodySm.copyWith(color: AppColors.textTertiary)),
+          );
+        }
+        return _PredictionCard(prediction: p);
       },
     );
   }
 }
 
-// ─── ThemeSection ────────────────────────────────────────────────────────────
-
-class _ThemeSection extends StatelessWidget {
-  final ThemesResponse themesResponse;
-
-  const _ThemeSection({required this.themesResponse});
+class _PredictionCard extends StatelessWidget {
+  final PredictionResponse prediction;
+  const _PredictionCard({required this.prediction});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionTitle('예측 테마 (ThemeSense)'),
-        if (!themesResponse.hasThemes)
-          _NoThemePlaceholder(message: themesResponse.message)
-        else ...[
-          _PrimaryThemeCard(theme: themesResponse.themes.first),
-          if (themesResponse.themes.length > 1) ...[
-            const SizedBox(height: 8),
-            Row(
-              children: themesResponse.themes
-                  .skip(1)
-                  .map((t) => Expanded(child: Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: _SecondaryThemeCard(theme: t),
-                      )))
-                  .toList(),
-            ),
-          ],
-        ],
-      ],
-    );
-  }
-}
-
-class _NoThemePlaceholder extends StatelessWidget {
-  final String? message;
-  const _NoThemePlaceholder({this.message});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFEF3C7),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFFDE68A)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('⏳', style: TextStyle(fontSize: 18)),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  '테마 분류 대기 중',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                    color: Color(0xFF92400E),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  message ?? 'ThemeSense 학습 universe 외 종목입니다',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF92400E),
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PrimaryThemeCard extends StatelessWidget {
-  final StockTheme theme;
-  const _PrimaryThemeCard({required this.theme});
-
-  @override
-  Widget build(BuildContext context) {
-    final pct = (theme.probability * 100).toStringAsFixed(1);
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1A237E), Color(0xFF283593)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(12),
-      ),
+    final p = prediction;
+    final ret = p.excessReturn60d;
+    final rank = p.percentile == null
+        ? null
+        : ((1 - p.percentile!) * 100).round().clamp(1, 100);
+    final price = p.scenarioPriceKospiFlat;
+    return DsCard(
+      outlined: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Text(
-                  'Primary',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              const Spacer(),
-              Text(
-                '$pct%',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            theme.name,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
+          const Row(children: [
+            Text('60거래일 전망 (ML)', style: AppText.headlineSm),
+            SizedBox(width: 4),
+            InfoButton(
+              title: '60거래일 전망이란?',
+              body: '머신러닝 모델이 앞으로 60거래일 동안 이 종목이 KOSPI보다 얼마나 '
+                  '더 오르거나 덜 오를지 예측한 상대 순위예요. 공시별 예상 CAR과는 다른 예측이에요.',
             ),
-          ),
-          const SizedBox(height: 8),
-          // 확률 막대
-          ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: LinearProgressIndicator(
-              value: theme.probability,
-              backgroundColor: Colors.white.withValues(alpha: 0.25),
-              valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-              minHeight: 5,
-            ),
-          ),
-          if (theme.topSensitiveMetrics != null &&
-              theme.topSensitiveMetrics!.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            const Divider(color: Colors.white24, height: 1),
-            const SizedBox(height: 10),
-            const Text(
-              '핵심 민감 지표 (β 계수)',
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 6),
-            ...theme.topSensitiveMetrics!.map(
-              (m) => Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: _MetricRow(metric: m),
-              ),
-            ),
+          ]),
+          if (rank != null) ...[
+            const SizedBox(height: AppSpace.sm + 4),
+            Text('KOSPI 대비 상위 $rank%',
+                style: AppText.numericMetric.copyWith(color: AppColors.brand)),
           ],
+          const SizedBox(height: AppSpace.sm + 4),
+          if (ret != null)
+            _row(
+              '예상 초과수익률',
+              Text(signedPct(ret * 100, digits: 1),
+                  style: AppText.labelLg.copyWith(
+                      color: AppColors.market(ret),
+                      fontFeatures: AppText.numeric.fontFeatures)),
+            ),
+          if (p.agreementScore != null)
+            _row('모델 일치도', _value(p.agreementScore!.toStringAsFixed(2))),
+          if (price != null) _row('KOSPI 보합 가정 시 참고 가격', _value(won(price))),
+          if (p.featureCoverage != null)
+            _row('데이터 충족률', _value('${(p.featureCoverage! * 100).round()}%')),
+          if (p.asOfDate != null) _row('기준일', _value(p.asOfDate!)),
+          const SizedBox(height: AppSpace.sm),
+          const Text('KOSPI 대비 상대 순위입니다', style: AppText.labelSm),
         ],
       ),
     );
   }
+
+  Widget _value(String v) => Text(v,
+      style: AppText.labelLg.copyWith(fontFeatures: AppText.numeric.fontFeatures));
+
+  Widget _row(String label, Widget value) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(children: [
+          Expanded(child: Text(label, style: AppText.bodySm)),
+          value,
+        ]),
+      );
 }
 
-class _MetricRow extends StatelessWidget {
-  final SensitiveMetric metric;
-  const _MetricRow({required this.metric});
+// ─── 보고서 목록 ──────────────────────────────────────────────────────────────
 
-  @override
-  Widget build(BuildContext context) {
-    final isPositive = metric.beta >= 0;
-    final betaStr = isPositive
-        ? '+${metric.beta.toStringAsFixed(2)}'
-        : metric.beta.toStringAsFixed(2);
-    final barColor =
-        isPositive ? const Color(0xFF86EFAC) : const Color(0xFF93C5FD);
-    final barWidth = (metric.beta.abs() / 1.0).clamp(0.05, 1.0);
-
-    return Row(
-      children: [
-        SizedBox(
-          width: 70,
-          child: Text(
-            metric.displayName,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-        Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(2),
-            child: LinearProgressIndicator(
-              value: barWidth,
-              backgroundColor: Colors.white.withValues(alpha: 0.15),
-              valueColor: AlwaysStoppedAnimation<Color>(barColor),
-              minHeight: 4,
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          'β $betaStr',
-          style: TextStyle(
-            color: barColor,
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            fontFamily: 'monospace',
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _SecondaryThemeCard extends StatelessWidget {
-  final StockTheme theme;
-  const _SecondaryThemeCard({required this.theme});
-
-  @override
-  Widget build(BuildContext context) {
-    final pct = (theme.probability * 100).toStringAsFixed(1);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE8EAF6),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFC5CAE9)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '#${theme.rank}',
-            style: const TextStyle(
-              color: Color(0xFF7986CB),
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            theme.name,
-            style: const TextStyle(
-              color: Color(0xFF1A237E),
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '$pct%',
-            style: const TextStyle(
-              color: Color(0xFF3949AB),
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── ReportSection ────────────────────────────────────────────────────────────
-
-class _ReportSection extends StatelessWidget {
-  final String ticker;
-  final ReportsResponse reportsResponse;
-
-  const _ReportSection(
-      {required this.ticker, required this.reportsResponse});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionTitle('분석 보고서 (최신순)'),
-        if (reportsResponse.reports.isEmpty)
-          _EmptyReports()
-        else
-          ...reportsResponse.reports
-              .map((r) => Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: _ReportCard(report: r),
-                  )),
-      ],
-    );
-  }
-}
-
-class _EmptyReports extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 32),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: const Column(
-        children: [
-          Text('📊', style: TextStyle(fontSize: 28)),
-          SizedBox(height: 8),
-          Text(
-            '아직 분석 보고서가 없습니다',
-            style: TextStyle(
-              fontSize: 13,
-              color: Color(0xFF9CA3AF),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          SizedBox(height: 4),
-          Text(
-            '공시 등록 후 자동으로 생성됩니다',
-            style: TextStyle(fontSize: 12, color: Color(0xFFD1D5DB)),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ReportCard extends StatelessWidget {
+class _ReportRow extends StatelessWidget {
   final AnalysisReport report;
-  const _ReportCard({required this.report});
+  const _ReportRow({required this.report});
 
   @override
   Widget build(BuildContext context) {
-    final car = report.expectedCar;
-    final carPositive = car != null && car >= 0;
-    final carStr = car != null
-        ? (carPositive ? '+${car.toStringAsFixed(1)}%' : '${car.toStringAsFixed(1)}%')
-        : null;
-
-    final dateStr = _formatDate(report.generatedAt);
-
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(10),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(10),
-        onTap: () {
-          Navigator.pushNamed(context, '/report', arguments: report.id);
-        },
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFFE5E7EB)),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 미읽음 마커
-              Padding(
-                padding: const EdgeInsets.only(top: 5, right: 8),
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: report.isRead
-                        ? Colors.transparent
-                        : const Color(0xFFEF4444),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      report.title,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: report.isRead
-                            ? FontWeight.w600
-                            : FontWeight.w800,
-                        color: const Color(0xFF111827),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      report.summary,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF6B7280),
-                        height: 1.4,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        if (report.appliedTheme != null)
-                          _ThemeBadge(name: report.appliedTheme!.name),
-                        if (carStr != null) ...[
-                          const SizedBox(width: 6),
-                          _CarBadge(carStr: carStr, isPositive: carPositive),
-                        ],
-                        const Spacer(),
-                        Text(
-                          dateStr,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Color(0xFF9CA3AF),
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        const Icon(
-                          Icons.chevron_right_rounded,
-                          size: 16,
-                          color: Color(0xFF9CA3AF),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+    final at = DateTime.tryParse(report.generatedAt);
+    return DsCard(
+      padding: const EdgeInsets.all(AppSpace.md),
+      onTap: () => Navigator.pushNamed(context, '/report', arguments: report.id),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            if (!report.isRead) ...[
+              const UnreadDot(),
+              const SizedBox(width: AppSpace.sm),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  String _formatDate(String isoStr) {
-    try {
-      final dt = DateTime.parse(isoStr).toLocal();
-      return '${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')} '
-          '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-    } catch (_) {
-      return isoStr;
-    }
-  }
-}
-
-class _ThemeBadge extends StatelessWidget {
-  final String name;
-  const _ThemeBadge({required this.name});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE8EAF6),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        name,
-        style: const TextStyle(
-          fontSize: 11,
-          color: Color(0xFF1A237E),
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}
-
-class _CarBadge extends StatelessWidget {
-  final String carStr;
-  final bool isPositive;
-  const _CarBadge({required this.carStr, required this.isPositive});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-      decoration: BoxDecoration(
-        color: isPositive
-            ? const Color(0xFFDCFCE7)
-            : const Color(0xFFEFF6FF),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        '예상 CAR $carStr',
-        style: TextStyle(
-          fontSize: 11,
-          color: isPositive ? const Color(0xFF16A34A) : const Color(0xFF1976D2),
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}
-
-// ─── 공통 헬퍼 ────────────────────────────────────────────────────────────────
-
-Widget _sectionTitle(String title) {
-  return Padding(
-    padding: const EdgeInsets.only(bottom: 8),
-    child: Text(
-      title,
-      style: const TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.w700,
-        color: Color(0xFF6B7280),
-        letterSpacing: 0.2,
-      ),
-    ),
-  );
-}
-
-class _ErrorState extends StatelessWidget {
-  final String message;
-  final VoidCallback onRetry;
-  const _ErrorState({required this.message, required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.error_outline_rounded,
-                size: 40, color: Color(0xFF9CA3AF)),
-            const SizedBox(height: 12),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                  fontSize: 13, color: Color(0xFF6B7280)),
+            Expanded(
+              child: Text(
+                report.title.trim(),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: report.isRead
+                    ? AppText.labelLg.copyWith(fontWeight: FontWeight.w500)
+                    : AppText.labelLg,
+              ),
             ),
-            const SizedBox(height: 16),
-            TextButton(onPressed: onRetry, child: const Text('다시 시도')),
-          ],
-        ),
+            const Icon(Icons.chevron_right_rounded,
+                size: 18, color: AppColors.textTertiary),
+          ]),
+          const SizedBox(height: AppSpace.sm),
+          Row(children: [
+            CarBadge(report.expectedCar),
+            if (report.appliedTheme != null) ...[
+              const SizedBox(width: 6),
+              Flexible(child: ThemeChip(report.appliedTheme!.name)),
+            ],
+            const Spacer(),
+            if (at != null) Text(relativeTime(at), style: AppText.labelSm),
+          ]),
+        ],
       ),
     );
   }

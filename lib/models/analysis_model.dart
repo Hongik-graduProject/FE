@@ -255,6 +255,8 @@ class ReportDetail {
   final double? carUpper;
   final List<MetricContribution> metricContributions;
   final List<String> keyFindings;
+  // 핵심 재무 (revenue, operating_profit, net_income, yoy_revenue_growth, yoy_op_growth). 없으면 빈 맵.
+  final Map<String, num> metrics;
   final bool isRead;
   final String generatedAt;
 
@@ -271,6 +273,7 @@ class ReportDetail {
     this.carUpper,
     required this.metricContributions,
     required this.keyFindings,
+    this.metrics = const {},
     required this.isRead,
     required this.generatedAt,
   });
@@ -304,8 +307,56 @@ class ReportDetail {
       keyFindings: (data['key_findings'] as List? ?? [])
           .map((f) => f as String)
           .toList(),
+      metrics: {
+        for (final e in (data['metrics'] as Map<String, dynamic>? ?? {}).entries)
+          if (e.value is num) e.key: e.value as num,
+      },
       isRead: data['is_read'] as bool,
       generatedAt: data['generated_at'] as String,
+    );
+  }
+}
+
+/// ML 60거래일 KOSPI 대비 초과수익률 예측 (available=false면 나머지 필드 없음)
+class PredictionResponse {
+  final bool available;
+  final String ticker;
+  final String? asOfDate;
+  final double? close;
+  final double? excessReturn60d;
+  final double? percentile;
+  final String? signal;
+  final double? agreementScore;
+  final double? scenarioPriceKospiFlat;
+  final double? featureCoverage;
+
+  const PredictionResponse({
+    required this.available,
+    required this.ticker,
+    this.asOfDate,
+    this.close,
+    this.excessReturn60d,
+    this.percentile,
+    this.signal,
+    this.agreementScore,
+    this.scenarioPriceKospiFlat,
+    this.featureCoverage,
+  });
+
+  factory PredictionResponse.fromJson(Map<String, dynamic> json) {
+    final data = json['data'] as Map<String, dynamic>;
+    double? d(String k) => (data[k] as num?)?.toDouble();
+    return PredictionResponse(
+      available: data['available'] as bool? ?? false,
+      ticker: data['ticker'] as String,
+      asOfDate: data['as_of_date'] as String?,
+      close: d('close'),
+      excessReturn60d: d('predicted_excess_return_60d'),
+      percentile: d('predicted_percentile'),
+      signal: data['signal'] as String?,
+      agreementScore: d('model_agreement_score'),
+      scenarioPriceKospiFlat: d('scenario_price_if_kospi_flat'),
+      featureCoverage: d('feature_coverage'),
     );
   }
 }

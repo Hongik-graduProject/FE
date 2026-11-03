@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_provider.dart';
-import '../../utils/constants.dart';
+import '../../utils/design_tokens.dart';
 import '../../widgets/common_widgets.dart';
 
 class DeleteAccountScreen extends StatefulWidget {
@@ -16,6 +16,13 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _agreedToDelete = false;
+
+  static const _deletedItems = [
+    (Icons.person_remove_outlined, '탈퇴 즉시 모든 계정 정보와 프로필이 삭제됩니다'),
+    (Icons.folder_delete_outlined, '관심 기업 폴더, 등록한 종목과 메모가 모두 삭제됩니다'),
+    (Icons.notifications_off_outlined, '분석 설정 및 알림 기록이 삭제됩니다'),
+    (Icons.history_toggle_off, '삭제된 데이터는 복구할 수 없습니다'),
+  ];
 
   @override
   void dispose() {
@@ -40,7 +47,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
       content: '탈퇴 시 모든 데이터가 삭제되며\n복구할 수 없습니다.',
       confirmText: '탈퇴하기',
       cancelText: '취소',
-      confirmColor: const Color(AppConstants.errorColor),
+      confirmColor: AppColors.error,
     );
 
     if (confirm != true || !mounted) return;
@@ -64,11 +71,14 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
+    final canDelete = !authProvider.isLoading &&
+        _agreedToDelete &&
+        _passwordController.text.isNotEmpty;
 
     return LoadingOverlay(
       isLoading: authProvider.isLoading,
       child: Scaffold(
-        backgroundColor: const Color(AppConstants.backgroundColor),
+        backgroundColor: AppColors.canvas,
         appBar: AppBar(
           title: const Text('회원 탈퇴'),
           leading: IconButton(
@@ -78,109 +88,103 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
         ),
         body: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+            padding: const EdgeInsets.fromLTRB(
+                AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.xl),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // ── 경고 배너 ─────────────────────────
+                // ── 경고 카드 ─────────────────────────
                 Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(AppSpace.lg),
                   decoration: BoxDecoration(
-                    color: const Color(AppConstants.errorColor).withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(12),
+                    color: AppColors.errorTint.withValues(alpha: 0.35),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
                     border: Border.all(
-                      color: const Color(AppConstants.errorColor).withValues(alpha: 0.3),
-                    ),
+                        color: AppColors.error.withValues(alpha: 0.25)),
                   ),
-                  child: Row(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(
-                        Icons.warning_amber_rounded,
-                        color: Color(AppConstants.errorColor),
-                        size: 22,
+                      Row(
+                        children: [
+                          const Icon(Icons.warning_rounded,
+                              color: AppColors.error, size: 22),
+                          const SizedBox(width: AppSpace.sm),
+                          Text('탈퇴 전 꼭 확인해 주세요',
+                              style: AppText.headlineSm
+                                  .copyWith(color: AppColors.error)),
+                        ],
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              '탈퇴 전 꼭 확인해 주세요',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 15,
-                                color: Color(AppConstants.errorColor),
+                      const SizedBox(height: AppSpace.md),
+                      for (final (icon, text) in _deletedItems)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(icon, size: 18, color: AppColors.error),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(text,
+                                    style: AppText.bodyMd.copyWith(
+                                        color: AppColors.textSecondary)),
                               ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppSpace.xl),
+
+                // ── 본인 확인 ─────────────────────────
+                Container(
+                  padding: const EdgeInsets.all(AppSpace.lg),
+                  decoration: BoxDecoration(
+                    color: AppColors.card,
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                    boxShadow: AppShadow.card,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text('본인 확인', style: AppText.headlineSm),
+                      const SizedBox(height: AppSpace.xs),
+                      const Text('안전한 탈퇴를 위해 현재 비밀번호를 입력해 주세요.',
+                          style: AppText.bodySm),
+                      const SizedBox(height: AppSpace.md),
+                      TextField(
+                        controller: _passwordController,
+                        obscureText: _obscurePassword,
+                        autofillHints: const [AutofillHints.password],
+                        onChanged: (_) => setState(() {}),
+                        decoration: InputDecoration(
+                          hintText: '현재 비밀번호 입력',
+                          prefixIcon: const Icon(Icons.lock_outline, size: 20),
+                          suffixIcon: IconButton(
+                            tooltip: _obscurePassword ? '비밀번호 보기' : '비밀번호 숨기기',
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                              size: 20,
+                              color: AppColors.textTertiary,
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              '• 탈퇴 즉시 모든 계정 정보가 삭제됩니다\n'
-                              '• 관심 기업 폴더와 메모가 모두 삭제됩니다\n'
-                              '• 분석 설정 및 알림 기록이 삭제됩니다\n'
-                              '• 삭제된 데이터는 복구할 수 없습니다',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: const Color(AppConstants.errorColor)
-                                    .withValues(alpha: 0.85),
-                                height: 1.6,
-                              ),
-                            ),
-                          ],
+                            onPressed: () => setState(
+                                () => _obscurePassword = !_obscurePassword),
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
-
-                const SizedBox(height: 32),
-
-                // ── 비밀번호 확인 ─────────────────────
-                const Text(
-                  '본인 확인',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Color(AppConstants.textPrimary),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  '탈퇴를 위해 현재 비밀번호를 입력해 주세요',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Color(AppConstants.textSecondary),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                AppTextField(
-                  controller: _passwordController,
-                  label: '현재 비밀번호',
-                  hint: '비밀번호를 입력해 주세요',
-                  obscureText: _obscurePassword,
-                  prefixIcon: const Icon(Icons.lock_outline, size: 20),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscurePassword
-                          ? Icons.visibility_off_outlined
-                          : Icons.visibility_outlined,
-                      size: 20,
-                      color: const Color(AppConstants.textSecondary),
-                    ),
-                    onPressed: () =>
-                        setState(() => _obscurePassword = !_obscurePassword),
-                  ),
-                ),
-
-                const SizedBox(height: 32),
+                const SizedBox(height: AppSpace.md),
 
                 // ── 동의 체크박스 ─────────────────────
                 InkWell(
                   onTap: () =>
                       setState(() => _agreedToDelete = !_agreedToDelete),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     child: Row(
@@ -193,57 +197,58 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                             value: _agreedToDelete,
                             onChanged: (v) =>
                                 setState(() => _agreedToDelete = v ?? false),
-                            activeColor: const Color(AppConstants.errorColor),
+                            activeColor: AppColors.error,
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(4)),
                           ),
                         ),
                         const SizedBox(width: 10),
-                        const Expanded(
-                          child: Text(
-                            '위 내용을 모두 확인하였으며, 회원 탈퇴에 동의합니다',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Color(AppConstants.textPrimary),
-                              height: 1.4,
-                            ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text.rich(
+                                TextSpan(
+                                  style: AppText.bodyMd,
+                                  children: [
+                                    TextSpan(
+                                      text: '[필수] ',
+                                      style: AppText.labelLg
+                                          .copyWith(color: AppColors.error),
+                                    ),
+                                    const TextSpan(
+                                        text: '위 유의사항을 모두 확인하였으며, 회원 탈퇴에 동의합니다.'),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              const Text('동의 후 탈퇴하면 계정을 복구할 수 없어요.',
+                                  style: AppText.labelSm),
+                            ],
                           ),
                         ),
                       ],
                     ),
                   ),
                 ),
-
-                const SizedBox(height: 40),
+                const SizedBox(height: AppSpace.xl),
 
                 // ── 탈퇴 버튼 ─────────────────────────
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    onPressed:
-                        (authProvider.isLoading || !_agreedToDelete)
-                            ? null
-                            : _deleteAccount,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(AppConstants.errorColor),
-                      disabledBackgroundColor:
-                          const Color(AppConstants.errorColor).withValues(alpha: 0.4),
-                    ),
-                    child: const Text('회원 탈퇴'),
+                ElevatedButton.icon(
+                  onPressed: canDelete ? _deleteAccount : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.error,
+                    disabledBackgroundColor: AppColors.textDisabled,
                   ),
+                  icon: const Icon(Icons.person_remove_outlined, size: 20),
+                  label: const Text('회원 탈퇴'),
                 ),
-
                 const SizedBox(height: 12),
 
                 // ── 취소 버튼 ─────────────────────────
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('취소'),
-                  ),
+                OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('취소'),
                 ),
               ],
             ),

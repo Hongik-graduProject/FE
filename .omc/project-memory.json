@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1781495574246,
+  "lastScanned": 1793641225167,
   "projectRoot": "/Users/bagboseong/programing/26/ing/hongik/hongik_grad/FE",
   "techStack": {
     "languages": [],
@@ -39,7 +39,7 @@
       "path": "Referance",
       "purpose": null,
       "fileCount": 2,
-      "lastAccessed": 1781495574222,
+      "lastAccessed": 1793641225154,
       "keyFiles": [
         "와이어프레임_visual.html",
         "프론트백_통신명세.html"
@@ -48,21 +48,20 @@
     "android": {
       "path": "android",
       "purpose": null,
-      "fileCount": 8,
-      "lastAccessed": 1781495574223,
+      "fileCount": 5,
+      "lastAccessed": 1793641225154,
       "keyFiles": [
         "build.gradle.kts",
-        "disclosure_app_android.iml",
         "gradle.properties",
-        "gradlew",
-        "gradlew.bat"
+        "local.properties",
+        "settings.gradle.kts"
       ]
     },
     "build": {
       "path": "build",
       "purpose": "Build output",
       "fileCount": 1,
-      "lastAccessed": 1781495574224,
+      "lastAccessed": 1793641225154,
       "keyFiles": [
         "11f9252fab9bb4424d40abfb06fd5e81.cache.dill.track.dill"
       ]
@@ -70,17 +69,18 @@
     "ios": {
       "path": "ios",
       "purpose": null,
-      "fileCount": 2,
-      "lastAccessed": 1781495574225,
+      "fileCount": 3,
+      "lastAccessed": 1793641225155,
       "keyFiles": [
-        "Podfile"
+        "Podfile",
+        "Podfile.lock"
       ]
     },
     "lib": {
       "path": "lib",
       "purpose": "Library code",
       "fileCount": 1,
-      "lastAccessed": 1781495574225,
+      "lastAccessed": 1793641225155,
       "keyFiles": [
         "main.dart"
       ]
@@ -89,7 +89,7 @@
       "path": "linux",
       "purpose": null,
       "fileCount": 2,
-      "lastAccessed": 1781495574226,
+      "lastAccessed": 1793641225155,
       "keyFiles": [
         "CMakeLists.txt"
       ]
@@ -98,7 +98,7 @@
       "path": "macos",
       "purpose": null,
       "fileCount": 3,
-      "lastAccessed": 1781495574227,
+      "lastAccessed": 1793641225155,
       "keyFiles": [
         "Podfile",
         "Podfile.lock"
@@ -107,9 +107,12 @@
     "test": {
       "path": "test",
       "purpose": "Test files",
-      "fileCount": 1,
-      "lastAccessed": 1781495574227,
+      "fileCount": 4,
+      "lastAccessed": 1793641225155,
       "keyFiles": [
+        "format_test.dart",
+        "market_theme_model_test.dart",
+        "prediction_model_test.dart",
         "widget_test.dart"
       ]
     },
@@ -117,7 +120,7 @@
       "path": "web",
       "purpose": null,
       "fileCount": 3,
-      "lastAccessed": 1781495574228,
+      "lastAccessed": 1793641225156,
       "keyFiles": [
         "favicon.png",
         "index.html",
@@ -128,7 +131,7 @@
       "path": "windows",
       "purpose": null,
       "fileCount": 2,
-      "lastAccessed": 1781495574228,
+      "lastAccessed": 1793641225156,
       "keyFiles": [
         "CMakeLists.txt"
       ]
@@ -137,7 +140,7 @@
       "path": "android/app",
       "purpose": "Application code",
       "fileCount": 1,
-      "lastAccessed": 1781495574228,
+      "lastAccessed": 1793641225156,
       "keyFiles": [
         "build.gradle.kts"
       ]
@@ -145,8 +148,8 @@
     "lib/models": {
       "path": "lib/models",
       "purpose": "Data models",
-      "fileCount": 3,
-      "lastAccessed": 1781495574229,
+      "fileCount": 7,
+      "lastAccessed": 1793641225156,
       "keyFiles": [
         "analysis_model.dart",
         "auth_model.dart",
@@ -156,22 +159,23 @@
     "lib/services": {
       "path": "lib/services",
       "purpose": "Business logic services",
-      "fileCount": 3,
-      "lastAccessed": 1781495574229,
+      "fileCount": 4,
+      "lastAccessed": 1793641225156,
       "keyFiles": [
         "api_service.dart",
         "auth_provider.dart",
-        "token_service.dart"
+        "fcm_service.dart"
       ]
     },
     "lib/utils": {
       "path": "lib/utils",
       "purpose": "Utility functions",
-      "fileCount": 2,
-      "lastAccessed": 1781495574230,
+      "fileCount": 4,
+      "lastAccessed": 1793641225156,
       "keyFiles": [
         "app_theme.dart",
-        "constants.dart"
+        "constants.dart",
+        "design_tokens.dart"
       ]
     }
   },

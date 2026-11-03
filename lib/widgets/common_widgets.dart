@@ -1,5 +1,6 @@
 // lib/widgets/common_widgets.dart
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../utils/constants.dart';
 
 // ─── 로딩 오버레이 ───────────────────────────────
@@ -176,4 +177,22 @@ Future<bool?> showConfirmDialog(
       ],
     ),
   );
+}
+
+/// 외부 브라우저로 링크를 연다 (뉴스, DART 원문).
+Future<void> openExternalUrl(BuildContext context, String url) async {
+  final uri = Uri.tryParse(url);
+  if (uri == null) return;
+  try {
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok && context.mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('링크를 열 수 없습니다')));
+    }
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  }
 }

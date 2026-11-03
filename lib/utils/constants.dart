@@ -14,15 +14,16 @@ class AppConstants {
   static const String accessTokenKey = 'access_token';
   static const String refreshTokenKey = 'refresh_token';
 
-  // 앱 색상 (메인 컬러 시스템)
-  static const int primaryColor = 0xFF1A73E8;       // 메인 블루
-  static const int primaryDarkColor = 0xFF1557B0;   // 진한 블루
-  static const int accentColor = 0xFF34A853;        // 성공/긍정 그린
-  static const int errorColor = 0xFFEA4335;         // 에러 레드
-  static const int warningColor = 0xFFFBBC04;       // 경고 옐로우
-  static const int backgroundColor = 0xFFF8F9FA;   // 배경
-  static const int surfaceColor = 0xFFFFFFFF;       // 카드/서피스
-  static const int textPrimary = 0xFF202124;        // 주요 텍스트
-  static const int textSecondary = 0xFF5F6368;      // 보조 텍스트
-  static const int dividerColor = 0xFFE8EAED;       // 구분선
+  // 앱 색상. 새 코드는 utils/design_tokens.dart 의 AppColors 를 쓴다.
+  // 아직 바꾸지 않은 화면도 같은 색으로 보이도록 값만 새 토큰에 맞췄다.
+  static const int primaryColor = 0xFF1A237E;       // AppColors.brand
+  static const int primaryDarkColor = 0xFF121858;   // AppColors.brandPressed
+  static const int accentColor = 0xFF3D5AFE;        // AppColors.accent (초록 금지)
+  static const int errorColor = 0xFFBA1A1A;         // AppColors.error
+  static const int warningColor = 0xFFFBBC04;
+  static const int backgroundColor = 0xFFF7F8FA;   // AppColors.canvas
+  static const int surfaceColor = 0xFFFFFFFF;       // AppColors.card
+  static const int textPrimary = 0xFF191F28;        // AppColors.textPrimary
+  static const int textSecondary = 0xFF4E5968;      // AppColors.textSecondary
+  static const int dividerColor = 0xFFE5E8EB;       // AppColors.border
 }

@@ -12,13 +12,15 @@ import 'screens/auth/splash_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/signup_screen.dart';
 import 'screens/auth/delete_account_screen.dart';
-import 'screens/home_screen.dart';
+import 'screens/main_shell.dart';
 import 'screens/company/company_detail_screen.dart';
 import 'screens/company/report_detail_screen.dart';
 import 'screens/folder/folder_detail_screen.dart';
+import 'screens/folder/folder_manage_screen.dart';
 import 'screens/notifications_screen.dart';
 import 'screens/search_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/theme_detail_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,14 +56,16 @@ class DisclosureApp extends StatelessWidget {
           '/': (context) => const SplashScreen(),
           '/login': (context) => const LoginScreen(),
           '/signup': (context) => const SignupScreen(),
-          '/home': (context) => const HomeScreen(),
+          '/home': (context) => const MainShell(),
           '/delete-account': (context) => const DeleteAccountScreen(),
           '/company': (context) => const CompanyDetailScreen(),
           '/report': (context) => const ReportDetailScreen(),
           '/folder': (context) => const FolderDetailScreen(),
+          '/folders': (context) => const FolderManageScreen(),
           '/notifications': (context) => const NotificationsScreen(),
           '/search': (context) => const SearchScreen(),
           '/settings': (context) => const SettingsScreen(),
+          '/theme': (context) => const ThemeDetailScreen(),
         },
       ),
     );

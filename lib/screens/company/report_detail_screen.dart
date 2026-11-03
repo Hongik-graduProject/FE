@@ -1,7 +1,13 @@
 // lib/screens/company/report_detail_screen.dart — W-16 분석 보고서 상세
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import '../../models/analysis_model.dart';
 import '../../services/api_service.dart';
+import '../../utils/design_tokens.dart';
+import '../../utils/format.dart';
+import '../../widgets/common_widgets.dart';
+import '../../widgets/ds.dart';
 
 class ReportDetailScreen extends StatefulWidget {
   const ReportDetailScreen({super.key});
@@ -34,33 +40,32 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.canvas,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1A237E),
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.canvas,
+        foregroundColor: AppColors.textPrimary,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
-        title: const Text('분석 보고서',
-            style: TextStyle(fontWeight: FontWeight.w700)),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.ios_share_rounded),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('공유 기능은 준비 중입니다')),
-              );
-            },
-          ),
-        ],
+        title: const Text('분석 보고서', style: AppText.headlineSm),
       ),
       body: FutureBuilder<ReportDetail>(
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Padding(
+              padding: EdgeInsets.all(AppSpace.lg),
+              child: Column(children: [
+                SkeletonBox(height: 260, radius: AppRadius.lg),
+                SizedBox(height: AppSpace.xl),
+                SkeletonList(count: 2, itemHeight: 120),
+              ]),
+            );
           }
           if (snapshot.hasError) {
-            return _ErrorBody(
-                message: snapshot.error.toString(), onRetry: _retry);
+            return Center(
+              child: ErrorRetry(
+                  message: snapshot.error.toString(), onRetry: _retry),
+            );
           }
           return _ReportBody(report: snapshot.data!);
         },
@@ -77,329 +82,291 @@ class _ReportBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _HeroHeader(report: report),
-          Padding(
-            padding: const EdgeInsets.all(14),
+    final src = report.sourceDisclosure;
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(
+          AppSpace.lg, AppSpace.sm, AppSpace.lg, 0),
+      children: [
+        _HeroCard(report: report),
+        if (report.metricContributions.isNotEmpty) ...[
+          const SizedBox(height: AppSpace.xl),
+          const SectionTitle('왜 이렇게 나왔나요?'),
+          _ContributionsCard(items: report.metricContributions),
+        ],
+        if (_FinanceCard.hasData(report.metrics)) ...[
+          const SizedBox(height: AppSpace.xl),
+          const SectionTitle('핵심 재무'),
+          _FinanceCard(metrics: report.metrics),
+        ],
+        if (report.keyFindings.isNotEmpty) ...[
+          const SizedBox(height: AppSpace.xl),
+          const SectionTitle('핵심 발견'),
+          DsCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (report.metricContributions.isNotEmpty) ...[
-                  _MetricContributionsSection(
-                      metrics: report.metricContributions),
-                  const SizedBox(height: 14),
-                ],
-                _SummarySection(summary: report.summary),
-                if (report.keyFindings.isNotEmpty) ...[
-                  const SizedBox(height: 14),
-                  _KeyFindingsSection(findings: report.keyFindings),
-                ],
-                if (report.sourceDisclosure != null) ...[
-                  const SizedBox(height: 14),
-                  _SourceDisclosureSection(
-                      disclosure: report.sourceDisclosure!),
-                ],
-                const SizedBox(height: 24),
+                for (final f in report.keyFindings)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('•  ', style: AppText.bodyMd),
+                        Expanded(child: Text(f, style: AppText.bodyMd)),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),
         ],
-      ),
+        if (src != null) ...[
+          const SizedBox(height: AppSpace.xl),
+          const SectionTitle('원문 공시'),
+          DsCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(src.title.trim(), style: AppText.labelLg),
+                if (DateTime.tryParse(src.filedAt) != null) ...[
+                  const SizedBox(height: AppSpace.xs),
+                  Text('${ymd(DateTime.parse(src.filedAt))} 공시',
+                      style: AppText.labelSm),
+                ],
+                const SizedBox(height: AppSpace.md),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => openExternalUrl(context, src.dartUrl),
+                    icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                    label: const Text('DART에서 원문 보기'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+        const Disclaimer(),
+      ],
     );
   }
 }
 
-// ─── Hero Header ─────────────────────────────────────────────────────────────
+// ─── Hero ────────────────────────────────────────────────────────────────────
 
-class _HeroHeader extends StatelessWidget {
+String? _verdict(double? car) {
+  if (car == null) return null;
+  if (car >= 1.0) return '이 공시는 주가에 긍정적일 것으로 분석돼요';
+  if (car > 0) return '이 공시는 주가에 소폭 긍정적일 것으로 분석돼요';
+  if (car <= -1.0) return '이 공시는 주가에 부정적일 것으로 분석돼요';
+  if (car < 0) return '이 공시는 주가에 소폭 부정적일 것으로 분석돼요';
+  return '이 공시는 주가에 영향이 거의 없을 것으로 분석돼요';
+}
+
+class _HeroCard extends StatelessWidget {
   final ReportDetail report;
-  const _HeroHeader({required this.report});
+  const _HeroCard({required this.report});
 
   @override
   Widget build(BuildContext context) {
     final car = report.expectedCar;
-    final carPositive = car != null && car >= 0;
-    final carStr = car != null
-        ? (carPositive ? '+${car.toStringAsFixed(1)}%' : '${car.toStringAsFixed(1)}%')
-        : '-';
-    final dateStr = _formatDate(report.generatedAt, dateOnly: true);
+    // 공시일이 있으면 공시일, 없으면 보고서 생성일
+    final date = DateTime.tryParse(
+        report.sourceDisclosure?.filedAt ?? report.generatedAt);
+    final verdict = _verdict(car);
+    final theme = report.appliedTheme;
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF1A237E), Color(0xFF283593)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
+    return DsCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '${report.name} (${report.ticker})',
-            style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.85), fontSize: 12),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            report.title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              height: 1.3,
+          Text('${report.name} · ${report.ticker}', style: AppText.labelMd),
+          const SizedBox(height: AppSpace.xs),
+          Text(report.title.trim(), style: AppText.headlineMd),
+          if (date != null) ...[
+            const SizedBox(height: AppSpace.xs),
+            Text('${ymd(date)} 공시', style: AppText.labelSm),
+          ],
+          if (verdict != null) ...[
+            const SizedBox(height: AppSpace.md),
+            Text(verdict,
+                style: AppText.bodyLg.copyWith(fontWeight: FontWeight.w600)),
+          ],
+          const SizedBox(height: AppSpace.md),
+          const Row(children: [
+            Text('예상 CAR', style: AppText.labelMd),
+            SizedBox(width: 4),
+            InfoButton(
+              title: '예상 CAR이란?',
+              body: '공시가 나온 뒤 며칠 동안 주가가 시장 평균보다 얼마나 더 오르거나 '
+                  '내릴지(누적 초과수익률) 예측한 값이에요. 플러스면 긍정, 마이너스면 부정적인 반응을 뜻해요.',
             ),
+          ]),
+          Text(
+            car == null ? '분석 대기' : '${arrow(car)} ${signedPct(car, digits: 1)}'.trim(),
+            style: AppText.numericHero.copyWith(color: AppColors.market(car)),
           ),
-          const SizedBox(height: 14),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              // 좌측: 테마 뱃지 + 날짜
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (report.appliedTheme != null) ...[
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 9, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          '📊 ${report.appliedTheme!.name}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                    ],
-                    Text(
-                      dateStr,
-                      style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.65),
-                          fontSize: 11),
-                    ),
-                  ],
-                ),
-              ),
-              // 우측: CAR + CI
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+          if (car != null && report.carLower != null && report.carUpper != null) ...[
+            const SizedBox(height: AppSpace.md),
+            _RangeBar(
+                lower: report.carLower!, upper: report.carUpper!, value: car),
+            const SizedBox(height: AppSpace.xs),
+            Text(
+              '95% 범위 ${signedPct(report.carLower, digits: 1)} ~ ${signedPct(report.carUpper, digits: 1)}',
+              style: AppText.labelSm,
+            ),
+          ],
+          if (theme != null) ...[
+            const SizedBox(height: AppSpace.md),
+            Row(children: [
+              Flexible(child: ThemeChip(theme.name)),
+              if (theme.routingScore != null) ...[
+                const SizedBox(width: AppSpace.sm),
+                Text('테마 일치도 ${theme.routingScore!.toStringAsFixed(2)}',
+                    style: AppText.labelMd),
+              ],
+            ]),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// 95% 범위 막대: 범위 구간은 연한 색, 예측값은 점, 0 위치에 세로선.
+class _RangeBar extends StatelessWidget {
+  final double lower;
+  final double upper;
+  final double value;
+  const _RangeBar(
+      {required this.lower, required this.upper, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    final lo = [lower, value, 0.0].reduce(math.min);
+    final hi = [upper, value, 0.0].reduce(math.max);
+    final pad = (hi - lo) * 0.1 + 0.01;
+    final min = lo - pad, span = hi + pad - min;
+    return LayoutBuilder(builder: (context, c) {
+      double x(double v) => (v - min) / span * c.maxWidth;
+      return SizedBox(
+        height: 16,
+        child: Stack(clipBehavior: Clip.none, children: [
+          Positioned(
+            left: 0,
+            right: 0,
+            top: 6,
+            height: 4,
+            child: Container(
+                decoration: BoxDecoration(
+                    color: AppColors.subtle,
+                    borderRadius: BorderRadius.circular(2))),
+          ),
+          Positioned(
+            left: x(lower),
+            width: math.max(x(upper) - x(lower), 2),
+            top: 5,
+            height: 6,
+            child: Container(
+                decoration: BoxDecoration(
+                    color: AppColors.marketTint(value),
+                    borderRadius: BorderRadius.circular(3))),
+          ),
+          Positioned(
+              left: x(0) - 0.5,
+              width: 1,
+              top: 0,
+              bottom: 0,
+              child: Container(color: AppColors.borderStrong)),
+          Positioned(
+            left: x(value) - 5,
+            top: 3,
+            width: 10,
+            height: 10,
+            child: Container(
+                decoration: BoxDecoration(
+                    color: AppColors.market(value), shape: BoxShape.circle)),
+          ),
+        ]),
+      );
+    });
+  }
+}
+
+// ─── 지표별 기여도 ────────────────────────────────────────────────────────────
+
+class _ContributionsCard extends StatelessWidget {
+  final List<MetricContribution> items;
+  const _ContributionsCard({required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    final sorted = [...items]
+      ..sort((a, b) => b.contribution.abs().compareTo(a.contribution.abs()));
+    final active = sorted.where((m) => m.contribution != 0).toList();
+    final zero = sorted.where((m) => m.contribution == 0).toList();
+    final maxAbs = active.isEmpty ? 0.0 : active.first.contribution.abs();
+
+    return DsCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final m in active) _ContributionRow(m: m, maxAbs: maxAbs),
+          if (zero.isNotEmpty)
+            Theme(
+              data: Theme.of(context)
+                  .copyWith(dividerColor: Colors.transparent),
+              child: ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                childrenPadding: EdgeInsets.zero,
+                dense: true,
+                title: Text('영향 없음 ${zero.length}개',
+                    style: AppText.labelMd
+                        .copyWith(color: AppColors.textTertiary)),
                 children: [
-                  Text(
-                    '예상 CAR',
-                    style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.7),
-                        fontSize: 10),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    carStr,
-                    style: TextStyle(
-                      color: carPositive
-                          ? const Color(0xFF86EFAC)
-                          : const Color(0xFF93C5FD),
-                      fontSize: 28,
-                      fontWeight: FontWeight.w900,
-                      height: 1.0,
-                    ),
-                  ),
-                  if (report.carLower != null && report.carUpper != null) ...[
-                    const SizedBox(height: 3),
-                    Text(
-                      '${_signStr(report.carLower!)}${report.carLower!.toStringAsFixed(1)}%'
-                      ' ~ '
-                      '${_signStr(report.carUpper!)}${report.carUpper!.toStringAsFixed(1)}%'
-                      ' (95% CI)',
-                      style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.6),
-                          fontSize: 9.5),
-                    ),
-                  ],
+                  for (final m in zero) _ContributionRow(m: m, maxAbs: maxAbs),
                 ],
               ),
-            ],
-          ),
+            ),
         ],
       ),
     );
   }
-
-  String _signStr(double v) => v >= 0 ? '+' : '';
 }
 
-// ─── Metric Contributions ─────────────────────────────────────────────────────
-
-class _MetricContributionsSection extends StatelessWidget {
-  final List<MetricContribution> metrics;
-  const _MetricContributionsSection({required this.metrics});
-
-  @override
-  Widget build(BuildContext context) {
-    final sorted = [...metrics]
-      ..sort((a, b) => b.contribution.abs().compareTo(a.contribution.abs()));
-    final maxAbs = sorted.isEmpty ? 1.0 : sorted.first.contribution.abs();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionTitle('민감 지표별 기여도'),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFFE5E7EB)),
-          ),
-          child: Column(
-            children: [
-              for (int i = 0; i < sorted.length; i++)
-                _DivergingBarRow(
-                  metric: sorted[i],
-                  maxAbs: maxAbs,
-                  isLast: i == sorted.length - 1,
-                ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _DivergingBarRow extends StatelessWidget {
-  final MetricContribution metric;
+class _ContributionRow extends StatelessWidget {
+  final MetricContribution m;
   final double maxAbs;
-  final bool isLast;
+  const _ContributionRow({required this.m, required this.maxAbs});
 
-  const _DivergingBarRow({
-    required this.metric,
-    required this.maxAbs,
-    required this.isLast,
-  });
+  static String _signed(double v, int digits) {
+    final s = v.abs().toStringAsFixed(digits);
+    return v > 0 ? '+$s' : (v < 0 ? '-$s' : s);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final isPositive = metric.contribution >= 0;
-    final betaStr = metric.beta >= 0
-        ? 'β +${metric.beta.toStringAsFixed(2)}'
-        : 'β ${metric.beta.toStringAsFixed(2)}';
-    final contStr = isPositive
-        ? '+${metric.contribution.toStringAsFixed(2)}%p'
-        : '${metric.contribution.toStringAsFixed(2)}%p';
-
     return Padding(
-      padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
+      padding: const EdgeInsets.symmetric(vertical: AppSpace.sm),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 지표명 / β / 기여도
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  metric.displayName,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF111827),
-                  ),
-                ),
-              ),
-              Text(
-                betaStr,
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: Color(0xFF6B7280),
-                  fontFamily: 'monospace',
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                contStr,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: isPositive
-                      ? const Color(0xFF16A34A)
-                      : const Color(0xFF1976D2),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 5),
-          // 분기 막대
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final halfWidth = constraints.maxWidth / 2;
-              final fraction =
-                  (metric.contribution.abs() / maxAbs).clamp(0.0, 1.0);
-              final barWidth = fraction * halfWidth;
-
-              return ClipRRect(
-                borderRadius: BorderRadius.circular(3),
-                child: SizedBox(
-                  height: 8,
-                  child: Stack(
-                    children: [
-                      // 배경
-                      Container(color: const Color(0xFFF3F4F6)),
-                      // 중앙선
-                      Positioned(
-                        left: halfWidth - 0.5,
-                        top: 0,
-                        bottom: 0,
-                        width: 1,
-                        child: Container(color: const Color(0xFFD1D5DB)),
-                      ),
-                      // 막대
-                      if (isPositive)
-                        Positioned(
-                          left: halfWidth,
-                          top: 0,
-                          bottom: 0,
-                          width: barWidth,
-                          child: Container(
-                            decoration: const BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Color(0xFF1A237E),
-                                  Color(0xFF16A34A),
-                                ],
-                              ),
-                            ),
-                          ),
-                        )
-                      else
-                        Positioned(
-                          left: halfWidth - barWidth,
-                          top: 0,
-                          bottom: 0,
-                          width: barWidth,
-                          child: Container(
-                              color: const Color(0xFF1976D2)),
-                        ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 3),
-          // raw 값
+          Row(children: [
+            Expanded(child: Text(m.displayName, style: AppText.labelLg)),
+            Text(
+              '${_signed(m.contribution, 2)}%p',
+              style: AppText.labelLg.copyWith(
+                  color: AppColors.market(m.contribution),
+                  fontFeatures: AppText.numeric.fontFeatures),
+            ),
+          ]),
+          const SizedBox(height: 6),
+          ContributionBar(value: m.contribution, maxAbs: maxAbs),
+          const SizedBox(height: 4),
           Text(
-            metric.rawValue ?? '-',
-            style: const TextStyle(fontSize: 10, color: Color(0xFF9CA3AF)),
+            'β ${m.beta.toStringAsFixed(2)} × 변화 ${_signed(m.delta, 1)}',
+            style: AppText.labelSm.copyWith(
+                fontFeatures: AppText.numeric.fontFeatures),
           ),
         ],
       ),
@@ -407,224 +374,52 @@ class _DivergingBarRow extends StatelessWidget {
   }
 }
 
-// ─── Summary ─────────────────────────────────────────────────────────────────
+// ─── 핵심 재무 ────────────────────────────────────────────────────────────────
 
-class _SummarySection extends StatelessWidget {
-  final String summary;
-  const _SummarySection({required this.summary});
+class _FinanceCard extends StatelessWidget {
+  final Map<String, num> metrics;
+  const _FinanceCard({required this.metrics});
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionTitle('요약'),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFFE5E7EB)),
-          ),
-          child: Text(
-            summary,
-            style: const TextStyle(
-              fontSize: 13,
-              color: Color(0xFF374151),
-              height: 1.6,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
+  static const _rows = [
+    ('revenue', '매출', 'yoy_revenue_growth'),
+    ('operating_profit', '영업이익', 'yoy_op_growth'),
+    ('net_income', '순이익', null),
+  ];
 
-// ─── Key Findings ─────────────────────────────────────────────────────────────
-
-class _KeyFindingsSection extends StatelessWidget {
-  final List<String> findings;
-  const _KeyFindingsSection({required this.findings});
+  static bool hasData(Map<String, num> m) =>
+      _rows.any((r) => m.containsKey(r.$1));
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionTitle('핵심 발견'),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFFE5E7EB)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (int i = 0; i < findings.length; i++)
-                Padding(
-                  padding: EdgeInsets.only(
-                      bottom: i == findings.length - 1 ? 0 : 8),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.only(top: 6, right: 8),
-                        child: CircleAvatar(
-                          radius: 3,
-                          backgroundColor: Color(0xFF1A237E),
-                        ),
-                      ),
-                      Expanded(
-                        child: Text(
-                          findings[i],
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: Color(0xFF374151),
-                            height: 1.5,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ─── Source Disclosure ────────────────────────────────────────────────────────
-
-class _SourceDisclosureSection extends StatelessWidget {
-  final SourceDisclosure disclosure;
-  const _SourceDisclosureSection({required this.disclosure});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionTitle('원본 공시'),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFFE5E7EB)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                disclosure.title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF111827),
-                ),
+    return DsCard(
+      child: Column(
+        children: [
+          for (final (key, label, yoyKey) in _rows)
+            if (metrics[key] != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(children: [
+                  Expanded(child: Text(label, style: AppText.bodySm)),
+                  Text(krwCompact(metrics[key]),
+                      style: AppText.labelLg.copyWith(
+                          fontFeatures: AppText.numeric.fontFeatures)),
+                  if (yoyKey != null && metrics[yoyKey] != null) ...[
+                    const SizedBox(width: AppSpace.sm),
+                    Text(
+                      '(${signedPct(metrics[yoyKey], digits: 1)})',
+                      style: AppText.labelMd.copyWith(
+                          color: AppColors.market(metrics[yoyKey]),
+                          fontFeatures: AppText.numeric.fontFeatures),
+                    ),
+                  ],
+                ]),
               ),
-              const SizedBox(height: 4),
-              Text(
-                _formatDate(disclosure.filedAt),
-                style: const TextStyle(
-                    fontSize: 12, color: Color(0xFF9CA3AF)),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    // 백엔드 연동 시 url_launcher 패키지로 dart_url 열기
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('DART 원문: ${disclosure.dartUrl}'),
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.open_in_new_rounded, size: 16),
-                  label: const Text('DART 원문 보기'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF1A237E),
-                    side: const BorderSide(color: Color(0xFF1A237E)),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                  ),
-                ),
-              ),
-            ],
+          const Align(
+            alignment: Alignment.centerRight,
+            child: Text('괄호는 전년 대비 증감률', style: AppText.labelSm),
           ),
-        ),
-      ],
-    );
-  }
-}
-
-// ─── Error ────────────────────────────────────────────────────────────────────
-
-class _ErrorBody extends StatelessWidget {
-  final String message;
-  final VoidCallback onRetry;
-  const _ErrorBody({required this.message, required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.error_outline_rounded,
-                size: 48, color: Color(0xFF9CA3AF)),
-            const SizedBox(height: 12),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                  fontSize: 13, color: Color(0xFF6B7280)),
-            ),
-            const SizedBox(height: 16),
-            TextButton(onPressed: onRetry, child: const Text('다시 시도')),
-          ],
-        ),
+        ],
       ),
     );
-  }
-}
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-Widget _sectionTitle(String title) {
-  return Padding(
-    padding: const EdgeInsets.only(bottom: 8),
-    child: Text(
-      title,
-      style: const TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.w700,
-        color: Color(0xFF6B7280),
-        letterSpacing: 0.2,
-      ),
-    ),
-  );
-}
-
-String _formatDate(String isoStr, {bool dateOnly = false}) {
-  try {
-    final dt = DateTime.parse(isoStr).toLocal();
-    if (dateOnly) {
-      return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
-    }
-    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} '
-        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-  } catch (_) {
-    return isoStr;
   }
 }

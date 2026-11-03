@@ -1,8 +1,13 @@
-// lib/screens/notifications_screen.dart — W-17 알림 화면
+// lib/screens/notifications_screen.dart — 알림 탭 (Stitch _9)
 import 'package:flutter/material.dart';
+
 import '../models/notification_model.dart';
 import '../services/api_service.dart';
-import '../utils/constants.dart';
+import '../utils/design_tokens.dart';
+import '../utils/format.dart';
+import '../widgets/ds.dart';
+import 'company/company_detail_screen.dart';
+import 'main_shell.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -12,41 +17,75 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
-  late Future<NotificationsResponse> _future;
+  static const _tabIndex = 2; // MainShell 의 알림 탭 위치
+
+  NotificationsResponse? _data;
+  List<NotificationItem> _items = [];
+  Object? _error;
+  bool _loading = true;
+  int? _lastTab;
 
   @override
   void initState() {
     super.initState();
-    _future = ApiService().getNotifications();
+    _load();
   }
 
-  void _reload() {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // IndexedStack 이라 화면이 살아 있으므로, 알림 탭으로 돌아올 때마다 새로 불러온다.
+    final tab = MainShellScope.maybeOf(context)?.currentIndex;
+    if (tab == _tabIndex && _lastTab != null && _lastTab != _tabIndex) _load();
+    _lastTab = tab;
+  }
+
+  Future<void> _load() async {
     setState(() {
-      _future = ApiService().getNotifications();
+      _loading = _data == null;
+      _error = null;
     });
-  }
-
-  Future<void> _markRead(NotificationItem item) async {
-    if (item.isRead) {
-      _navigateFor(item);
-      return;
-    }
     try {
-      await ApiService().markNotificationRead(item.id);
-    } catch (_) {
-      // 읽음 처리 실패해도 상세 이동은 계속한다.
+      final res = await ApiService().getNotifications();
+      if (!mounted) return;
+      setState(() {
+        _data = res;
+        _items = res.notifications;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e;
+        _loading = false;
+      });
     }
-    if (!mounted) return;
-    _navigateFor(item);
-    // 목록 색상 갱신을 위해 백그라운드 reload (await X — UX 부드럽게).
-    _reload();
   }
 
-  void _navigateFor(NotificationItem item) {
-    // 분석 보고서 알림이면 보고서 상세로, 새 공시 알림이면 (지금은 없는 disclosure 상세)
-    // 대신 보고서가 있으면 보고서 상세로 이동, 그게 없으면 무동작.
+  int get _unread => _items.where((n) => !n.isRead).length;
+
+  Future<void> _open(NotificationItem item) async {
+    if (!item.isRead) {
+      setState(() => _items = [
+            for (final n in _items)
+              n.id == item.id ? n.copyWith(isRead: true) : n
+          ]);
+      try {
+        await ApiService().markNotificationRead(item.id);
+      } catch (_) {
+        // 읽음 처리 실패해도 상세 이동은 계속한다.
+      }
+      if (!mounted) return;
+    }
     if (item.reportId != null) {
       Navigator.pushNamed(context, '/report', arguments: item.reportId);
+    } else if (item.ticker != null) {
+      Navigator.pushNamed(context, '/company',
+          // 보고서 없는 알림은 새 공시 알림이라 공시 탭(1)으로 연다.
+          arguments: CompanyArgs(
+              ticker: item.ticker!,
+              name: item.stockName ?? item.ticker!,
+              initialTab: 1));
     }
   }
 
@@ -54,8 +93,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final messenger = ScaffoldMessenger.of(context);
     try {
       final count = await ApiService().markAllNotificationsRead();
-      messenger.showSnackBar(SnackBar(content: Text('알림 $count건을 읽음 처리했습니다')));
-      _reload();
+      messenger.showSnackBar(SnackBar(content: Text('알림 $count건을 읽음 처리했어요')));
+      _load();
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(e.toString())));
     }
@@ -64,212 +103,161 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(AppConstants.backgroundColor),
+      backgroundColor: AppColors.canvas,
       appBar: AppBar(
-        title: const Text('알림'),
+        automaticallyImplyLeading: false,
+        title: Row(children: [
+          const Text('알림'),
+          if (_unread > 0) ...[
+            const SizedBox(width: AppSpace.sm),
+            _CountBadge(_unread),
+          ],
+        ]),
         actions: [
           TextButton(
-            onPressed: _markAllRead,
-            child: const Text('전체 읽음'),
+            onPressed: _unread > 0 ? _markAllRead : null,
+            child: const Text('모두 읽음'),
           ),
+          const SizedBox(width: AppSpace.sm),
         ],
       ),
-      body: FutureBuilder<NotificationsResponse>(
-        future: _future,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return _ErrorBody(
-              message: snapshot.error.toString(),
-              onRetry: _reload,
-            );
-          }
-          final items = snapshot.data!.notifications;
-          if (items.isEmpty) {
-            return const _EmptyBody();
-          }
-          return RefreshIndicator(
-            onRefresh: () async => _reload(),
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: items.length,
-              separatorBuilder: (_, __) =>
-                  const Divider(height: 1, color: Color(0xFFE5E7EB)),
-              itemBuilder: (context, index) => _NotificationTile(
-                item: items[index],
-                onTap: () => _markRead(items[index]),
-              ),
-            ),
-          );
-        },
-      ),
+      body: RefreshIndicator(onRefresh: _load, child: _body()),
+    );
+  }
+
+  Widget _body() {
+    const pad = EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.md, AppSpace.lg, 0);
+    if (_loading) {
+      return ListView(
+          padding: pad,
+          children: const [SkeletonList(count: 4, itemHeight: 104)]);
+    }
+    if (_error != null) {
+      return ListView(
+          padding: pad,
+          children: [ErrorRetry(message: _error.toString(), onRetry: _load)]);
+    }
+    if (_items.isEmpty) {
+      return ListView(padding: pad, children: const [
+        EmptyState(
+          icon: Icons.notifications_none_rounded,
+          title: '새 알림이 없어요',
+          message: '관심종목에 새 공시나 분석 보고서가 나오면 알려드려요.',
+        ),
+      ]);
+    }
+
+    // 최신순으로 오므로 연속된 같은 날짜끼리 묶는다.
+    final groups = <String, List<NotificationItem>>{};
+    for (final n in _items) {
+      final t = DateTime.tryParse(n.createdAt);
+      groups.putIfAbsent(t == null ? '이전' : dayGroupLabel(t), () => []).add(n);
+    }
+
+    return ListView(
+      padding: pad,
+      children: [
+        for (final e in groups.entries) ...[
+          Padding(
+            padding: const EdgeInsets.only(
+                top: AppSpace.sm, bottom: AppSpace.sm + 4),
+            child: Row(children: [
+              Text(e.key, style: AppText.headlineSm),
+              const Spacer(),
+              Text('${e.value.length}건', style: AppText.labelSm),
+            ]),
+          ),
+          for (final n in e.value) ...[
+            _NotificationCard(item: n, onTap: () => _open(n)),
+            const SizedBox(height: AppSpace.sm + 4),
+          ],
+          const SizedBox(height: AppSpace.md),
+        ],
+        if (_data!.pagination.hasNext)
+          Text('최근 알림 ${_items.length}건만 보여요',
+              textAlign: TextAlign.center, style: AppText.labelSm),
+        const Disclaimer(),
+      ],
     );
   }
 }
 
-// ─── Tile ─────────────────────────────────────────────────────────────────────
+class _CountBadge extends StatelessWidget {
+  final int count;
+  const _CountBadge(this.count);
 
-class _NotificationTile extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) => Container(
+        constraints: const BoxConstraints(minWidth: 20),
+        height: 20,
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+            color: AppColors.accent, borderRadius: BorderRadius.circular(999)),
+        child: Text(count > 99 ? '99+' : '$count',
+            style: AppText.labelSm
+                .copyWith(color: Colors.white, fontWeight: FontWeight.w700)),
+      );
+}
+
+class _NotificationCard extends StatelessWidget {
   final NotificationItem item;
   final VoidCallback onTap;
-
-  const _NotificationTile({required this.item, required this.onTap});
+  const _NotificationCard({required this.item, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final isUnread = !item.isRead;
-    final icon = _iconForType(item.type);
+    final isReport = item.type == 'disclosure_report';
+    // 보고서 알림은 title 이 공시 제목, 새 공시 알림은 body 가 공시 제목이다.
+    final disclosureTitle = isReport ? item.title : (item.body ?? item.title);
+    final created = DateTime.tryParse(item.createdAt);
+    final unread = !item.isRead;
 
-    return InkWell(
+    return DsCard(
       onTap: onTap,
-      child: Container(
-        color: isUnread ? const Color(0xFFF1F7FF) : Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            CircleAvatar(
-              backgroundColor: const Color(AppConstants.primaryColor)
-                  .withValues(alpha: 0.12),
-              radius: 18,
-              child: Icon(icon,
-                  size: 18, color: const Color(AppConstants.primaryColor)),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          item.title,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight:
-                                isUnread ? FontWeight.w700 : FontWeight.w600,
-                            color: const Color(AppConstants.textPrimary),
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      if (isUnread)
-                        Container(
-                          width: 8,
-                          height: 8,
-                          margin: const EdgeInsets.only(left: 8, top: 4),
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Color(0xFFEF4444),
-                          ),
-                        ),
-                    ],
+      color: unread ? AppColors.accentTint.withValues(alpha: 0.6) : null,
+      padding: const EdgeInsets.fromLTRB(
+          AppSpace.md, AppSpace.md, AppSpace.sm + 4, AppSpace.md),
+      child: Row(children: [
+        Expanded(
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              if (item.stockName != null || item.ticker != null)
+                // Spacer 와 1:1 로 나누면 종목명이 너무 일찍 잘린다.
+                Flexible(
+                  flex: 5,
+                  child: DsPill(
+                    [item.stockName, item.ticker].whereType<String>().join(' '),
+                    background:
+                        unread ? AppColors.accentTint : AppColors.subtle,
+                    foreground:
+                        unread ? AppColors.accent : AppColors.textTertiary,
                   ),
-                  if (item.body != null && item.body!.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      item.body!,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(AppConstants.textSecondary),
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                  const SizedBox(height: 6),
-                  Text(
-                    _formatRelative(item.createdAt),
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF9CA3AF),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+                ),
+              const SizedBox(width: AppSpace.sm),
+              Text(isReport ? '새 분석 보고서' : '새 공시', style: AppText.labelSm),
+              const Spacer(),
+              if (created != null)
+                Text(relativeTime(created), style: AppText.labelSm),
+              if (unread) ...[const SizedBox(width: 6), const UnreadDot()],
+            ]),
+            const SizedBox(height: AppSpace.sm),
+            Text(disclosureTitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppText.labelLg.copyWith(
+                    fontWeight: unread ? FontWeight.w700 : FontWeight.w600)),
+            if (item.expectedCar != null) ...[
+              const SizedBox(height: AppSpace.sm),
+              CarBadge(item.expectedCar),
+            ],
+          ]),
         ),
-      ),
-    );
-  }
-
-  IconData _iconForType(String type) {
-    switch (type) {
-      case 'new_disclosure':
-        return Icons.article_outlined;
-      case 'disclosure_report':
-      default:
-        return Icons.assessment_outlined;
-    }
-  }
-
-  String _formatRelative(String iso) {
-    try {
-      final dt = DateTime.parse(iso).toLocal();
-      final diff = DateTime.now().difference(dt);
-      if (diff.inMinutes < 1) return '방금 전';
-      if (diff.inHours < 1) return '${diff.inMinutes}분 전';
-      if (diff.inDays < 1) return '${diff.inHours}시간 전';
-      if (diff.inDays < 7) return '${diff.inDays}일 전';
-      return '${dt.year}.${dt.month.toString().padLeft(2, '0')}.${dt.day.toString().padLeft(2, '0')}';
-    } catch (_) {
-      return iso;
-    }
-  }
-}
-
-// ─── Empty / Error ────────────────────────────────────────────────────────────
-
-class _EmptyBody extends StatelessWidget {
-  const _EmptyBody();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.notifications_off_outlined,
-              size: 48, color: Color(0xFFCBD5E1)),
-          SizedBox(height: 12),
-          Text('받은 알림이 없습니다',
-              style: TextStyle(fontSize: 14, color: Color(0xFF9CA3AF))),
-        ],
-      ),
-    );
-  }
-}
-
-class _ErrorBody extends StatelessWidget {
-  final String message;
-  final VoidCallback onRetry;
-  const _ErrorBody({required this.message, required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.error_outline_rounded,
-                size: 40, color: Color(0xFF9CA3AF)),
-            const SizedBox(height: 12),
-            Text(message,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                    fontSize: 13, color: Color(0xFF6B7280))),
-            const SizedBox(height: 16),
-            TextButton(onPressed: onRetry, child: const Text('다시 시도')),
-          ],
-        ),
-      ),
+        const SizedBox(width: AppSpace.xs),
+        const Icon(Icons.chevron_right_rounded,
+            size: 20, color: AppColors.textDisabled),
+      ]),
     );
   }
 }
