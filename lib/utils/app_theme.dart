@@ -11,10 +11,14 @@ class AppTheme {
     );
     return ThemeData(
       useMaterial3: true,
+      brightness: Brightness.dark,
+      fontFamily: 'HankenGrotesk',
       // DESIGN.md 의 대체 글꼴 순서. iOS 는 Apple SD Gothic Neo 로 그려진다.
       fontFamilyFallback: const ['Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic'],
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.brand,
+        brightness: Brightness.dark,
+        onSurface: AppColors.textPrimary,
         primary: AppColors.brand,
         secondary: AppColors.accent,
         surface: AppColors.card,
@@ -108,8 +112,8 @@ class AppTheme {
 
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.textPrimary,
-        contentTextStyle: AppText.bodyMd.copyWith(color: Colors.white),
+        backgroundColor: AppColors.raised,
+        contentTextStyle: AppText.bodyMd,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
       ),
 

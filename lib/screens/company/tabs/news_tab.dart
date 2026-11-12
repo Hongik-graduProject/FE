@@ -29,7 +29,7 @@ class _NewsTabState extends State<NewsTab> with AutomaticKeepAliveClientMixin {
   }
 
   Future<void> _refresh() async {
-    setState(() => _future = ApiService().getStockNews(widget.ticker));
+    setState(() { _future = ApiService().getStockNews(widget.ticker); });
     try {
       await _future;
     } catch (_) {} // 오류는 FutureBuilder 가 보여준다.

@@ -270,14 +270,14 @@ class _SearchScreenState extends State<SearchScreen> {
         onSelectKeyword: _searchKeyword,
         onDeleteRecent: (k) async {
           await ApiService().deleteRecentSearch(keyword: k);
-          setState(() => _recentFuture = ApiService().getRecentSearches());
+          setState(() { _recentFuture = ApiService().getRecentSearches(); });
         },
         onClearAllRecent: () async {
           await ApiService().deleteRecentSearch();
-          setState(() => _recentFuture = ApiService().getRecentSearches());
+          setState(() { _recentFuture = ApiService().getRecentSearches(); });
         },
-        onRetryRanking: () => setState(() => _rankingFuture = ApiService().getStockRanking()),
-        onRetryThemes: () => setState(() => _themesFuture = ApiService().getThemes()),
+        onRetryRanking: () => setState(() { _rankingFuture = ApiService().getStockRanking(); }),
+        onRetryThemes: () => setState(() { _themesFuture = ApiService().getThemes(); }),
         onSelectTheme: (t) => Navigator.pushNamed(context, '/theme',
             arguments: ThemeArgs(id: t.id, name: t.name)),
         onSelectStock: _openCompany,

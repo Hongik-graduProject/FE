@@ -18,7 +18,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  static const _tabIndex = 3; // MainShell 의 MY 탭 위치
+  static const _tabIndex = 4; // MainShell 의 MY 탭 위치
 
   List<Folder>? _folders;
   int? _unreadReports;

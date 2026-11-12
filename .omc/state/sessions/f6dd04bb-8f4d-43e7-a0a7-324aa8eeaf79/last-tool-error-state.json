@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"ps eww -o command= -p 29737 | tr ' ' '\\\\n' | grep -o '^KOSPI_API_[A-Z_]*=' ; ps eww -o command= -p 29737 | tr ' ' '\\\\n' | grep '^KOSPI_API_ARTIFACT_DIR\\\\|^KOSPI_API_ALLOWED'; cd /Users/bag...",
+  "error": "Exit code 1\nKOSPI_API_ARTIFACT_DIR=\nKOSPI_API_API_KEY=\nKOSPI_API_ARTIFACT_DIR=/Users/bagboseong/programing/26/ing/hongik/hongik_grad/ML_result\n/Users/bagboseong/programing/26/ing/hongik/hongik_grad/ML                                                                                  e60386c [main]\n/private/tmp/claude-501/-Users-bagboseong-programing-26-ing-hongik-hongik-grad/aa55183d-290a-46dd-a464-cb407cdbeaad/scratchpad/ml-boseong  09d6a30 (detached HEAD) prunable\n09d6a30 refactor: replace boseo...",
+  "timestamp": "2026-11-12T10:59:04.830Z",
+  "retry_count": 1
+}

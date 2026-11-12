@@ -179,6 +179,43 @@
       ]
     }
   },
-  "hotPaths": [],
+  "hotPaths": [
+    {
+      "path": "lib/screens/radar_screen.dart",
+      "accessCount": 6,
+      "lastAccessed": 1794488620745,
+      "type": "file"
+    },
+    {
+      "path": "lib/screens/company/report_extras.dart",
+      "accessCount": 3,
+      "lastAccessed": 1794487686491,
+      "type": "file"
+    },
+    {
+      "path": "lib/screens/company/report_detail_screen.dart",
+      "accessCount": 2,
+      "lastAccessed": 1794487690158,
+      "type": "file"
+    },
+    {
+      "path": "lib/models/analysis_model.dart",
+      "accessCount": 1,
+      "lastAccessed": 1794478039013,
+      "type": "file"
+    },
+    {
+      "path": "lib/screens/company/analysis_tab.dart",
+      "accessCount": 1,
+      "lastAccessed": 1794478042545,
+      "type": "file"
+    },
+    {
+      "path": "lib/demo/demo_data.dart",
+      "accessCount": 1,
+      "lastAccessed": 1794487261076,
+      "type": "file"
+    }
+  ],
   "userDirectives": []
 }

@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>신규 기능 프로토타입</title>
+<style>
+  :root {
+    --brand: #1A237E; --accent: #3D5AFE; --accent-tint: #EEF2FF;
+    --bull: #E53935; --bull-tint: #FDECEC; --bear: #1E63D6; --bear-tint: #EDF4FC; --flat: #8E929B;
+    --canvas: #F7F8FA; --card: #FFFFFF; --subtle: #F1F3F5;
+    --t1: #191F28; --t2: #4E5968; --t3: #8B95A1;
+    --border: #E5E8EB; --border-strong: #D1D6DB; --error: #BA1A1A; --error-tint: #FFDAD6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; color: var(--t1); background: #ECEEF2; line-height: 1.5; padding: 32px 16px 64px; }
+  .doc { max-width: 1080px; margin: 0 auto; }
+  h1 { font-size: 26px; color: var(--brand); margin-bottom: 6px; }
+  .lead { color: var(--t2); font-size: 14px; margin-bottom: 8px; max-width: 760px; }
+  .tokens { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 28px; }
+  .tok { display: flex; align-items: center; gap: 6px; background: #fff; border-radius: 8px; padding: 6px 10px; font-size: 12px; color: var(--t2); }
+  .tok i { width: 16px; height: 16px; border-radius: 4px; display: inline-block; border: 1px solid rgba(0,0,0,.08); }
+
+  .screen { display: flex; gap: 28px; align-items: flex-start; background: #fff; border-radius: 20px; padding: 24px; margin-bottom: 24px; flex-wrap: wrap; }
+  .screen-id { font-size: 12px; font-weight: 700; color: var(--accent); }
+  .screen h2 { font-size: 18px; color: var(--brand); margin-bottom: 10px; }
+  .spec { flex: 1 1 320px; font-size: 13.5px; color: var(--t2); }
+  .spec h3 { font-size: 13px; color: var(--t1); margin: 14px 0 4px; }
+  .spec ul { padding-left: 18px; }
+  .spec li { margin: 3px 0; }
+  .spec code { font-family: Menlo, monospace; font-size: 12px; background: var(--subtle); padding: 1px 5px; border-radius: 4px; color: var(--t1); }
+  .ask { background: var(--accent-tint); border-radius: 10px; padding: 10px 12px; margin-top: 12px; color: var(--t1); }
+
+  /* phone */
+  .phone { flex: 0 0 auto; width: 320px; height: 680px; background: var(--canvas); border: 8px solid #1F2937; border-radius: 40px; overflow: hidden; position: relative; display: flex; flex-direction: column; }
+  .status { height: 34px; display: flex; justify-content: space-between; align-items: center; padding: 0 22px; font-size: 12px; font-weight: 600; flex: 0 0 auto; }
+  .appbar { height: 44px; display: flex; align-items: center; gap: 10px; padding: 0 16px; font-size: 16px; font-weight: 700; flex: 0 0 auto; }
+  .appbar .sp { flex: 1; }
+  .appbar .act { font-size: 13px; color: var(--accent); font-weight: 600; }
+  .body { flex: 1; overflow: hidden; padding: 4px 16px 0; }
+  .tabbar { flex: 0 0 auto; height: 62px; background: #fff; border-top: 1px solid var(--border); display: flex; }
+  .tabbar div { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 10.5px; color: var(--t3); }
+  .tabbar div b { font-size: 18px; line-height: 1; font-weight: 400; }
+  .tabbar .on { color: var(--brand); font-weight: 700; }
+
+  .card { background: var(--card); border-radius: 16px; padding: 14px; box-shadow: 0 2px 8px rgba(0,0,0,.04); margin-bottom: 12px; }
+  .card.outlined { box-shadow: none; border: 1px solid var(--border); }
+  .pill { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .row { display: flex; align-items: center; gap: 6px; }
+  .between { display: flex; justify-content: space-between; align-items: center; }
+  .h-sm { font-size: 15px; font-weight: 700; }
+  .lbl { font-size: 12px; font-weight: 600; color: var(--t2); }
+  .sm { font-size: 11px; color: var(--t3); }
+  .body-sm { font-size: 12.5px; color: var(--t2); }
+  .num { font-variant-numeric: tabular-nums; font-weight: 700; }
+  .bull { color: var(--bull); } .bear { color: var(--bear); }
+  .btn { display: flex; align-items: center; justify-content: center; gap: 6px; height: 44px; border-radius: 12px; font-size: 14px; font-weight: 600; }
+  .btn.fill { background: var(--brand); color: #fff; }
+  .btn.line { border: 1px solid var(--border-strong); color: var(--brand); background: #fff; }
+  .section-title { font-size: 15px; font-weight: 700; margin: 18px 0 10px; }
+  .crit { display: flex; gap: 10px; align-items: flex-start; padding: 9px 0; border-bottom: 1px solid var(--subtle); font-size: 13px; font-weight: 600; }
+  .crit:last-of-type { border-bottom: 0; }
+  .crit .ic { width: 18px; flex: 0 0 18px; text-align: center; }
+  .crit .ev { display: block; font-weight: 400; font-size: 11.5px; color: var(--t2); margin-top: 2px; }
+  .legend { display: flex; gap: 12px; font-size: 10.5px; color: var(--t3); margin-top: 6px; }
+  .legend span::before { content: ""; display: inline-block; width: 12px; height: 3px; vertical-align: middle; margin-right: 4px; background: currentColor; }
+  .bar { height: 6px; border-radius: 3px; background: var(--subtle); overflow: hidden; } .bar i { display: block; height: 100%; background: var(--accent); }
+  @media (max-width: 720px) { .screen { padding: 16px; } }
+</style>
+</head>
+<body>
+<div class="doc">
+  <h1>공시레이더 신규 기능 프로토타입</h1>
+  <p class="lead">레이더 스코프, 타임머신, 반박 모드 세 기능과 하단 탭 변경을 담은 화면 시안이다. 각 화면의 오른쪽에 목적, 표시 데이터(BE API 필드), 상태, 디자인 요청 사항을 적었다. 숫자는 2026-11-12 로컬 실데이터 기준 예시다.</p>
+  <p class="lead">공통 규칙: 한국 주식 관례대로 상승·플러스는 빨강, 하락·마이너스는 파랑이다. 초록은 쓰지 않는다. 회색은 "아직 분석 전" 또는 "판정 제외"다. 화면에는 투자 권유가 아니라는 문구를 유지한다.</p>
+  <div class="tokens">
+    <span class="tok"><i style="background:#1A237E"></i>brand #1A237E</span>
+    <span class="tok"><i style="background:#3D5AFE"></i>accent #3D5AFE</span>
+    <span class="tok"><i style="background:#EEF2FF"></i>accentTint #EEF2FF</span>
+    <span class="tok"><i style="background:#E53935"></i>bull(+) #E53935</span>
+    <span class="tok"><i style="background:#1E63D6"></i>bear(−) #1E63D6</span>
+    <span class="tok"><i style="background:#8E929B"></i>flat #8E929B</span>
+    <span class="tok"><i style="background:#F7F8FA"></i>canvas #F7F8FA</span>
+    <span class="tok"><i style="background:#191F28"></i>text #191F28</span>
+    <span class="tok"><i style="background:#BA1A1A"></i>error #BA1A1A</span>
+  </div>
+
+  <!-- ───────── R-1 레이더 실시간 ───────── -->
+  <section class="screen">
+    <div class="phone">
+      <div class="status"><span>9:41</span><span>●●● ▮</span></div>
+      <div class="appbar">공시 레이더<span class="sp"></span><span style="font-size:18px">⟲</span></div>
+      <div class="body">
+        <div class="between" style="margin-bottom:6px">
+          <span class="pill" style="background:var(--accent-tint);color:var(--accent)">◉ 실시간 수신 중</span>
+          <span class="lbl">공시 99건</span>
+        </div>
+        <div style="display:flex;justify-content:center"><svg viewBox="0 0 300 300" width="282" height="282" xmlns="http://www.w3.org/2000/svg" font-family="Apple SD Gothic Neo, Noto Sans KR, sans-serif"><circle cx="150" cy="150" r="118" fill="#fff" stroke="#E5E8EB"/><circle cx="150" cy="150" r="59.0" fill="none" stroke="#EEF2FF" stroke-width="35.4"/><circle cx="150" cy="150" r="23.6" fill="none" stroke="#E5E8EB"/><circle cx="150" cy="150" r="41.3" fill="none" stroke="#E5E8EB"/><circle cx="150" cy="150" r="76.7" fill="none" stroke="#E5E8EB"/><circle cx="150" cy="150" r="85.0" fill="none" stroke="#E5E8EB"/><line x1="150" y1="150" x2="150.0" y2="32.0" stroke="#F1F3F5"/><text x="150.0" y="19.7" font-size="7.5" fill="#8B95A1" text-anchor="middle">AI</text><line x1="150" y1="150" x2="192.6" y2="40.0" stroke="#F1F3F5"/><text x="198.2" y="28.7" font-size="7.5" fill="#8B95A1" text-anchor="middle">IT하드웨어</text><line x1="150" y1="150" x2="229.5" y2="62.8" stroke="#F1F3F5"/><text x="239.8" y="54.5" font-size="7.5" fill="#8B95A1" text-anchor="middle">2차전지</text><line x1="150" y1="150" x2="255.6" y2="97.4" stroke="#F1F3F5"/><text x="269.4" y="93.6" font-size="7.5" fill="#8B95A1" text-anchor="middle">바이오</text><line x1="150" y1="150" x2="267.5" y2="139.1" stroke="#F1F3F5"/><text x="282.8" y="140.7" font-size="7.5" fill="#8B95A1" text-anchor="middle">자동차</text><line x1="150" y1="150" x2="263.5" y2="182.3" stroke="#F1F3F5"/><text x="278.2" y="189.5" font-size="7.5" fill="#8B95A1" text-anchor="middle">조선</text><line x1="150" y1="150" x2="244.2" y2="221.1" stroke="#F1F3F5"/><text x="256.4" y="233.4" font-size="7.5" fill="#8B95A1" text-anchor="middle">화학</text><line x1="150" y1="150" x2="212.1" y2="250.3" stroke="#F1F3F5"/><text x="220.2" y="266.4" font-size="7.5" fill="#8B95A1" text-anchor="middle">철강</text><line x1="150" y1="150" x2="171.7" y2="266.0" stroke="#F1F3F5"/><text x="174.5" y="284.1" font-size="7.5" fill="#8B95A1" text-anchor="middle">기계</text><line x1="150" y1="150" x2="128.3" y2="266.0" stroke="#F1F3F5"/><text x="125.5" y="284.1" font-size="7.5" fill="#8B95A1" text-anchor="middle">소프트웨어</text><line x1="150" y1="150" x2="87.9" y2="250.3" stroke="#F1F3F5"/><text x="79.8" y="266.4" font-size="7.5" fill="#8B95A1" text-anchor="middle">미디어</text><line x1="150" y1="150" x2="55.8" y2="221.1" stroke="#F1F3F5"/><text x="43.6" y="233.4" font-size="7.5" fill="#8B95A1" text-anchor="middle">금융</text><line x1="150" y1="150" x2="36.5" y2="182.3" stroke="#F1F3F5"/><text x="21.8" y="189.5" font-size="7.5" fill="#8B95A1" text-anchor="middle">건설</text><line x1="150" y1="150" x2="32.5" y2="139.1" stroke="#F1F3F5"/><text x="17.2" y="140.7" font-size="7.5" fill="#8B95A1" text-anchor="middle">소비재</text><line x1="150" y1="150" x2="44.4" y2="97.4" stroke="#F1F3F5"/><text x="30.6" y="93.6" font-size="7.5" fill="#8B95A1" text-anchor="middle">에너지</text><line x1="150" y1="150" x2="70.5" y2="62.8" stroke="#F1F3F5"/><text x="60.2" y="54.5" font-size="7.5" fill="#8B95A1" text-anchor="middle">운송</text><line x1="150" y1="150" x2="107.4" y2="40.0" stroke="#F1F3F5"/><text x="101.8" y="28.7" font-size="7.5" fill="#8B95A1" text-anchor="middle">기타 서비스</text><path d="M150,150 L266.2,170.5 A118,118 0 0,1 240.4,225.8 Z" fill="#3D5AFE" opacity="0.12"/><line x1="150" y1="150" x2="240.4" y2="225.8" stroke="#3D5AFE" stroke-width="1.5" opacity="0.7"/><text x="150" y="167.2" font-size="8" fill="#3D5AFE" text-anchor="middle" font-weight="600">내 종목</text><text x="150" y="212.0" font-size="8" fill="#3D5AFE" text-anchor="middle" font-weight="600">같은 테마</text><text x="150" y="254.5" font-size="8" fill="#3D5AFE" text-anchor="middle" font-weight="600">그 외</text><circle cx="87.8" cy="243.0" r="4.3" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="172.7" cy="63.7" r="3.9" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="230.4" cy="96.0" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="121.2" cy="61.7" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="52.3" cy="140.1" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="218.1" cy="74.5" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="253.9" cy="108.5" r="5.8" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="197.5" cy="59.4" r="4.3" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="176.6" cy="40.5" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="243.2" cy="132.7" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="234.5" cy="92.5" r="3.9" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="238.9" cy="164.2" r="3.9" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="228.2" cy="207.3" r="3.9" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="207.5" cy="65.8" r="3.9" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="222.4" cy="219.3" r="3.9" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="42.6" cy="153.9" r="4.3" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="61.3" cy="111.4" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="246.4" cy="192.7" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="221.2" cy="76.6" r="3.9" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="68.9" cy="75.6" r="5.8" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="62.5" cy="113.4" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="240.2" cy="105.4" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="95.1" cy="222.9" r="4.3" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="62.1" cy="141.6" r="5.8" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="216.1" cy="65.6" r="3.9" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="98.8" cy="231.4" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="89.8" cy="67.2" r="4.3" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="233.1" cy="79.3" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="89.2" cy="63.9" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="199.6" cy="56.0" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="61.8" cy="115.4" r="4.3" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="80.7" cy="204.1" r="4.3" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="78.2" cy="207.0" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="88.1" cy="86.3" r="5.2" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="138.2" cy="239.9" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="55.0" cy="171.9" r="5.2" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="88.4" cy="85.2" r="4.3" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="55.0" cy="186.0" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="40.3" cy="146.3" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="37.1" cy="152.2" r="5.8" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="40.0" cy="171.8" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="220.2" cy="90.7" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="192.9" cy="226.4" r="5.2" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="241.5" cy="172.2" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="246.9" cy="133.8" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="101.5" cy="251.0" r="5.8" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="108.6" cy="46.0" r="5.8" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="192.5" cy="60.4" r="5.2" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="59.9" cy="187.8" r="4.3" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="243.8" cy="115.9" r="4.3" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="174.6" cy="61.1" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="70.2" cy="105.2" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="175.5" cy="63.7" r="3.9" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="251.2" cy="146.8" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="163.0" cy="61.8" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="63.0" cy="177.4" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="69.3" cy="213.9" r="4.3" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="229.1" cy="106.4" r="4.3" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="56.0" cy="116.6" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="208.6" cy="80.3" r="5.8" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="98.3" cy="243.2" r="4.3" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="247.2" cy="176.4" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="120.5" cy="57.9" r="5.8" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="146.3" cy="43.1" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="221.4" cy="72.5" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="109.6" cy="62.0" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="56.3" cy="202.5" r="3.9" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="105.4" cy="65.1" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="227.7" cy="225.4" r="5.2" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="50.2" cy="187.3" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="156.6" cy="90.7" r="4.7" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="140.6" cy="74.2" r="4.7" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="111.9" cy="183.1" r="4.7" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="89.6" cy="185.2" r="4.7" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="117.4" cy="179.8" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="154.4" cy="92.2" r="4.7" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="155.5" cy="91.9" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="87.1" cy="188.0" r="4.7" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="153.7" cy="79.2" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="90.0" cy="184.0" r="4.0" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="93.2" cy="195.5" r="6.4" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="114.3" cy="176.4" r="6.4" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="105.6" cy="183.3" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="149.9" cy="102.7" r="4.0" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="147.6" cy="103.4" r="6.4" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="145.9" cy="87.2" r="6.4" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="110.3" cy="174.8" r="4.0" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="146.1" cy="108.4" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="156.6" cy="93.7" r="4.0" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="147.1" cy="107.8" r="4.0" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="108.4" cy="191.9" r="4.7" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="106.5" cy="192.1" r="4.0" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="144.8" cy="76.7" r="4.7" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="97.1" cy="187.3" r="6.4" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="145.1" cy="90.1" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="98.1" cy="195.2" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="148.0" cy="132.0" r="5.2" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="148.0" cy="132.0" r="7.2" fill="none" stroke="#1A237E" stroke-width="1.3"/><circle cx="148.7" cy="140.9" r="8.5" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="148.7" cy="140.9" r="10.5" fill="none" stroke="#1A237E" stroke-width="1.3"/><circle cx="142.0" cy="154.4" r="5.0" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="142.0" cy="154.4" r="7.0" fill="none" stroke="#1A237E" stroke-width="1.3"/><circle cx="150.7" cy="135.9" r="12" fill="none" stroke="#191F28" stroke-width="1.6"/></svg></div>
+        <div class="card" style="padding:12px;margin-top:4px">
+          <div class="between"><span class="lbl">삼성전자 · 005930</span><span class="sm">11/12 14:03</span></div>
+          <div style="font-size:13.5px;font-weight:600;margin:3px 0 8px">현금·현물배당 결정</div>
+          <div class="row">
+            <span class="pill" style="background:var(--bull-tint);color:var(--bull)">▲ +2.0% 예상 CAR</span>
+            <span class="sm">기여 1위 매출증가율</span><span class="sp" style="flex:1"></span><span class="sm">›</span>
+          </div>
+        </div>
+        <div class="sm" style="text-align:center">중심: 내 관심종목 · 띠: 같은 테마 · 바깥: 그 외<br>빨강 +CAR · 파랑 −CAR · 회색 분석 전</div>
+      </div>
+      <div class="tabbar"><div><b>⌂</b>홈</div><div class="on"><b>◎</b>레이더</div><div><b>⌕</b>탐색</div><div><b>◬</b>알림</div><div><b>◯</b>MY</div></div>
+    </div>
+    <div class="spec">
+      <div class="screen-id">R-1 · 하단 두 번째 탭</div>
+      <h2>레이더 스코프 (실시간)</h2>
+      <p>장중 공시 한 건을 원형 레이더의 점 하나로 보여준다. 중심에 가까울수록 내 관심종목과 가깝다.</p>
+      <h3>배치 규칙</h3>
+      <ul>
+        <li>각도: 종목의 1순위 테마. 테마 17개가 원주를 같은 간격으로 나눈다. 같은 테마 점은 그 칸 안에 흩어 찍는다.</li>
+        <li>반지름 3단: 내 관심종목(중심 원), 관심종목과 같은 테마(가운데 띠, 테마 소속 확률이 높을수록 안쪽), 그 외(바깥 고리).</li>
+        <li>점 크기 = 예상 CAR 절대값, 색 = 부호. 리포트가 아직 없으면 작은 회색 점. 내 종목 점은 남색 테두리.</li>
+        <li>3분 이내 들어온 공시는 깜빡인다. 스윕 선이 60초에 한 바퀴 돈다(서버 DART 폴링 주기와 같음).</li>
+        <li>점을 탭하면 아래 카드가 뜨고, 카드를 탭하면 종목 상세로 간다.</li>
+      </ul>
+      <h3>데이터</h3>
+      <p><code>GET /radar/points?from&amp;to</code> 진입 시 최근 6시간, <code>GET /radar/stream</code> SSE로 새 점 추가. 필드: <code>name ticker title theme theta radius expected_car top_metric filed_at is_mine</code></p>
+      <h3>상태</h3>
+      <ul>
+        <li>재연결 중: 상단 pill 문구가 "재연결 중"으로 바뀐다.</li>
+        <li>관심종목 관련 공시가 없음: 모든 점이 바깥 고리. 안내 문구 "관심종목이나 같은 테마 종목의 공시가 없어 모두 바깥 고리에 있어요".</li>
+        <li>공시 0건: "최근 6시간 공시가 없어요. 과거 하루를 재생해 보세요."</li>
+      </ul>
+      <div class="ask"><b>디자인 요청.</b> 중심에 가까울수록 "나와 가깝다"는 느낌이 거리로 바로 읽히게 해 주세요. 현재 시안은 거리 차이보다 점 진하기 차이로 읽힌다는 피드백이 있었습니다. 테마 이름 17개가 원 밖에서 겹치지 않는 배치, 점이 수백 개일 때의 정리 방식(묶음 배지 등)도 제안 부탁합니다.</div>
+    </div>
+  </section>
+
+  <!-- ───────── R-2 레이더 리플레이 ───────── -->
+  <section class="screen">
+    <div class="phone">
+      <div class="status"><span>9:41</span><span>●●● ▮</span></div>
+      <div class="appbar">공시 레이더<span class="sp"></span><span class="act">실시간</span><span style="font-size:18px">⟲</span></div>
+      <div class="body">
+        <div class="between" style="margin-bottom:6px">
+          <span class="pill" style="background:var(--accent-tint);color:var(--accent)">▶ 2026-11-11 재생 · 11/11 15:20</span>
+          <span class="lbl">공시 422건</span>
+        </div>
+        <div style="display:flex;justify-content:center"><svg viewBox="0 0 300 300" width="282" height="282" xmlns="http://www.w3.org/2000/svg" font-family="Apple SD Gothic Neo, Noto Sans KR, sans-serif"><circle cx="150" cy="150" r="118" fill="#fff" stroke="#E5E8EB"/><circle cx="150" cy="150" r="59.0" fill="none" stroke="#EEF2FF" stroke-width="35.4"/><circle cx="150" cy="150" r="23.6" fill="none" stroke="#E5E8EB"/><circle cx="150" cy="150" r="41.3" fill="none" stroke="#E5E8EB"/><circle cx="150" cy="150" r="76.7" fill="none" stroke="#E5E8EB"/><circle cx="150" cy="150" r="85.0" fill="none" stroke="#E5E8EB"/><line x1="150" y1="150" x2="150.0" y2="32.0" stroke="#F1F3F5"/><text x="150.0" y="19.7" font-size="7.5" fill="#8B95A1" text-anchor="middle">AI</text><line x1="150" y1="150" x2="192.6" y2="40.0" stroke="#F1F3F5"/><text x="198.2" y="28.7" font-size="7.5" fill="#8B95A1" text-anchor="middle">IT하드웨어</text><line x1="150" y1="150" x2="229.5" y2="62.8" stroke="#F1F3F5"/><text x="239.8" y="54.5" font-size="7.5" fill="#8B95A1" text-anchor="middle">2차전지</text><line x1="150" y1="150" x2="255.6" y2="97.4" stroke="#F1F3F5"/><text x="269.4" y="93.6" font-size="7.5" fill="#8B95A1" text-anchor="middle">바이오</text><line x1="150" y1="150" x2="267.5" y2="139.1" stroke="#F1F3F5"/><text x="282.8" y="140.7" font-size="7.5" fill="#8B95A1" text-anchor="middle">자동차</text><line x1="150" y1="150" x2="263.5" y2="182.3" stroke="#F1F3F5"/><text x="278.2" y="189.5" font-size="7.5" fill="#8B95A1" text-anchor="middle">조선</text><line x1="150" y1="150" x2="244.2" y2="221.1" stroke="#F1F3F5"/><text x="256.4" y="233.4" font-size="7.5" fill="#8B95A1" text-anchor="middle">화학</text><line x1="150" y1="150" x2="212.1" y2="250.3" stroke="#F1F3F5"/><text x="220.2" y="266.4" font-size="7.5" fill="#8B95A1" text-anchor="middle">철강</text><line x1="150" y1="150" x2="171.7" y2="266.0" stroke="#F1F3F5"/><text x="174.5" y="284.1" font-size="7.5" fill="#8B95A1" text-anchor="middle">기계</text><line x1="150" y1="150" x2="128.3" y2="266.0" stroke="#F1F3F5"/><text x="125.5" y="284.1" font-size="7.5" fill="#8B95A1" text-anchor="middle">소프트웨어</text><line x1="150" y1="150" x2="87.9" y2="250.3" stroke="#F1F3F5"/><text x="79.8" y="266.4" font-size="7.5" fill="#8B95A1" text-anchor="middle">미디어</text><line x1="150" y1="150" x2="55.8" y2="221.1" stroke="#F1F3F5"/><text x="43.6" y="233.4" font-size="7.5" fill="#8B95A1" text-anchor="middle">금융</text><line x1="150" y1="150" x2="36.5" y2="182.3" stroke="#F1F3F5"/><text x="21.8" y="189.5" font-size="7.5" fill="#8B95A1" text-anchor="middle">건설</text><line x1="150" y1="150" x2="32.5" y2="139.1" stroke="#F1F3F5"/><text x="17.2" y="140.7" font-size="7.5" fill="#8B95A1" text-anchor="middle">소비재</text><line x1="150" y1="150" x2="44.4" y2="97.4" stroke="#F1F3F5"/><text x="30.6" y="93.6" font-size="7.5" fill="#8B95A1" text-anchor="middle">에너지</text><line x1="150" y1="150" x2="70.5" y2="62.8" stroke="#F1F3F5"/><text x="60.2" y="54.5" font-size="7.5" fill="#8B95A1" text-anchor="middle">운송</text><line x1="150" y1="150" x2="107.4" y2="40.0" stroke="#F1F3F5"/><text x="101.8" y="28.7" font-size="7.5" fill="#8B95A1" text-anchor="middle">기타 서비스</text><path d="M150,150 L266.2,170.5 A118,118 0 0,1 240.4,225.8 Z" fill="#3D5AFE" opacity="0.12"/><line x1="150" y1="150" x2="240.4" y2="225.8" stroke="#3D5AFE" stroke-width="1.5" opacity="0.7"/><text x="150" y="167.2" font-size="8" fill="#3D5AFE" text-anchor="middle" font-weight="600">내 종목</text><text x="150" y="212.0" font-size="8" fill="#3D5AFE" text-anchor="middle" font-weight="600">같은 테마</text><text x="150" y="254.5" font-size="8" fill="#3D5AFE" text-anchor="middle" font-weight="600">그 외</text><circle cx="40.2" cy="131.3" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="237.9" cy="140.0" r="5.8" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="207.4" cy="245.8" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="172.8" cy="235.6" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="140.8" cy="253.2" r="3.9" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="224.7" cy="208.4" r="3.9" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="242.0" cy="170.9" r="5.2" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="145.6" cy="36.9" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="158.0" cy="62.6" r="3.9" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="235.4" cy="203.4" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="64.5" cy="121.7" r="5.2" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="47.8" cy="129.1" r="3.9" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="42.9" cy="184.5" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="234.9" cy="224.4" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="242.2" cy="208.0" r="5.8" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="246.6" cy="134.4" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="196.9" cy="51.5" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="219.7" cy="73.4" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="59.0" cy="139.6" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="45.6" cy="184.4" r="5.8" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="125.5" cy="249.9" r="5.8" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="133.0" cy="236.8" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="238.2" cy="183.5" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="157.9" cy="246.5" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="110.6" cy="235.0" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="219.7" cy="216.8" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="101.7" cy="234.4" r="4.3" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="164.2" cy="249.4" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="204.6" cy="234.3" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="209.5" cy="77.0" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="247.7" cy="150.1" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="62.9" cy="162.2" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="205.2" cy="220.5" r="3.9" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="253.7" cy="138.1" r="5.8" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="45.0" cy="171.2" r="5.8" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="94.9" cy="77.4" r="5.8" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="238.4" cy="154.1" r="5.2" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="112.3" cy="53.5" r="5.8" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="106.7" cy="70.0" r="3.9" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="125.5" cy="50.9" r="5.2" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="163.7" cy="42.1" r="3.9" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="196.5" cy="226.5" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="253.3" cy="139.4" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="45.6" cy="181.4" r="3.9" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="195.4" cy="56.8" r="5.8" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="209.4" cy="230.5" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="48.9" cy="112.0" r="5.8" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="124.8" cy="42.3" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="108.5" cy="71.2" r="5.8" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="93.7" cy="74.9" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="161.7" cy="242.7" r="5.2" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="218.3" cy="213.6" r="5.8" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="66.2" cy="95.2" r="4.3" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="207.7" cy="68.6" r="5.8" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="121.7" cy="253.4" r="3.9" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="228.4" cy="192.8" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="109.7" cy="234.8" r="5.8" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="128.9" cy="251.3" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="136.4" cy="51.1" r="4.3" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="163.6" cy="261.7" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="224.3" cy="224.0" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="119.1" cy="60.4" r="4.3" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="54.4" cy="101.4" r="3.9" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="227.2" cy="206.1" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="96.1" cy="80.7" r="4.3" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="213.2" cy="61.7" r="4.3" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="173.5" cy="244.5" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="228.3" cy="84.0" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="108.2" cy="65.7" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="251.6" cy="133.3" r="5.8" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="88.4" cy="188.7" r="4.7" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="141.3" cy="91.7" r="6.4" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="116.1" cy="175.0" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="92.6" cy="181.4" r="6.4" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="99.3" cy="193.8" r="6.4" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="108.3" cy="185.2" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="114.7" cy="171.5" r="4.7" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="115.8" cy="180.1" r="4.0" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="150.6" cy="76.8" r="4.7" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="106.1" cy="182.2" r="6.4" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="95.8" cy="204.2" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="92.1" cy="196.2" r="4.7" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="152.3" cy="98.8" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="104.6" cy="194.8" r="4.0" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="143.2" cy="74.6" r="6.4" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="108.6" cy="174.4" r="4.7" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="90.2" cy="191.2" r="6.4" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="141.8" cy="83.7" r="3.0" fill="#8E929B" stroke="#fff" stroke-width="0.8"/><circle cx="107.2" cy="188.1" r="4.0" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="104.1" cy="186.3" r="4.0" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="147.8" cy="92.0" r="4.7" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="108.7" cy="181.3" r="4.7" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="96.3" cy="185.8" r="4.7" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="99.0" cy="183.6" r="6.4" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="148.1" cy="102.8" r="4.0" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="148.5" cy="101.4" r="6.4" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="147.8" cy="135.3" r="5.2" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="147.8" cy="135.3" r="7.2" fill="none" stroke="#1A237E" stroke-width="1.3"/><circle cx="149.2" cy="136.5" r="8.5" fill="#E53935" stroke="#fff" stroke-width="0.8"/><circle cx="149.2" cy="136.5" r="10.5" fill="none" stroke="#1A237E" stroke-width="1.3"/><circle cx="139.9" cy="156.1" r="5.0" fill="#1E63D6" stroke="#fff" stroke-width="0.8"/><circle cx="139.9" cy="156.1" r="7.0" fill="none" stroke="#1A237E" stroke-width="1.3"/></svg></div>
+        <div class="sm" style="text-align:center;margin-top:6px">하루치 공시를 60초 동안 시간 순서대로 재생</div>
+      </div>
+      <div class="tabbar"><div><b>⌂</b>홈</div><div class="on"><b>◎</b>레이더</div><div><b>⌕</b>탐색</div><div><b>◬</b>알림</div><div><b>◯</b>MY</div></div>
+    </div>
+    <div class="spec">
+      <div class="screen-id">R-2</div>
+      <h2>레이더 리플레이 (과거 하루)</h2>
+      <p>장이 닫혀 있을 때나 발표 데모용이다. 오른쪽 위 ⟲ 아이콘으로 날짜를 고르면 그날 첫 공시부터 마지막 공시까지를 60초에 펼쳐 재생한다. "실시간"을 누르면 R-1로 돌아간다.</p>
+      <h3>데이터</h3>
+      <p><code>GET /radar/points?from=그날 00:00&amp;to=+24h</code> (최대 500점)</p>
+      <div class="ask"><b>디자인 요청.</b> 재생 진행률(타임라인 바), 일시정지, 배속 조절 컨트롤 자리를 제안해 주세요. 현재는 상단 pill의 시각 표시뿐입니다.</div>
+    </div>
+  </section>
+
+  <!-- ───────── T-1 보고서 상세 하단 (초기) ───────── -->
+  <section class="screen">
+    <div class="phone">
+      <div class="status"><span>9:41</span><span>●●● ▮</span></div>
+      <div class="appbar">‹ &nbsp;분석 보고서</div>
+      <div class="body">
+        <div class="card">
+          <div class="lbl">SK하이닉스 · 000660</div>
+          <div style="font-size:16px;font-weight:700;margin:2px 0">분기보고서 (2026.09)</div>
+          <div class="sm">2026-10-28 공시</div>
+          <div style="font-size:14px;font-weight:600;margin:10px 0 6px">이 공시는 주가에 긍정적일 것으로 분석돼요</div>
+          <div class="lbl">예상 CAR ⓘ</div>
+          <div class="num bull" style="font-size:30px">▲ +10.5%</div>
+          <div class="sm">참고 범위 +8.5% ~ +12.5% (통계적 신뢰구간 아님)</div>
+        </div>
+        <div class="section-title">왜 이렇게 나왔나요?</div>
+        <div class="card" style="height:70px;opacity:.5"><div class="sm">기여도 카드 (기존)</div></div>
+        <div class="section-title">타임머신</div>
+        <div class="card">
+          <div style="font-size:13.5px;margin-bottom:12px">이 공시 이후 실제 주가는 예측대로 움직였을까요?</div>
+          <div class="btn fill">⟲ 그날로 돌아가기</div>
+        </div>
+        <div class="btn line" style="margin-top:12px">⚖ 이 분석이 틀렸다면?</div>
+      </div>
+    </div>
+    <div class="spec">
+      <div class="screen-id">T-1 · 보고서 상세 하단</div>
+      <h2>타임머신·반박 모드 진입 버튼</h2>
+      <p>기존 보고서 상세(히어로, 기여도, 핵심 재무, 원문 공시) 아래에 두 섹션을 붙인다. 두 기능 모두 버튼을 눌러야 API를 부른다. 타임머신은 첫 호출에 시세 적재가 붙어 몇 초 걸린다.</p>
+      <ul>
+        <li>로딩: 카드 크기의 스켈레톤.</li>
+        <li>오류: 카드 안에 오류 문구와 "다시 시도".</li>
+      </ul>
+      <div class="ask"><b>디자인 요청.</b> 반박 모드를 접어 둘지 펼쳐 둘지 결정이 필요합니다. 접어 두면 아무도 안 누를 수 있다는 우려가 있습니다. 두 버튼의 시각적 위계도 제안 부탁합니다.</div>
+    </div>
+  </section>
+
+  <!-- ───────── T-2 타임머신 결과 ───────── -->
+  <section class="screen">
+    <div class="phone">
+      <div class="status"><span>9:41</span><span>●●● ▮</span></div>
+      <div class="appbar">‹ &nbsp;분석 보고서</div>
+      <div class="body">
+        <div class="section-title" style="margin-top:6px">타임머신</div>
+        <div class="card">
+          <div class="between">
+            <span class="pill" style="background:var(--subtle);color:var(--t2)">판정 대기 중, D-49</span>
+            <span class="sm">기준일 2026-10-28</span>
+          </div>
+          <div class="between" style="margin-top:12px"><span class="body-sm">예측 (예상 CAR)</span><span class="num bull">+10.5%</span></div>
+          <div class="between" style="margin-top:4px"><span class="body-sm">지금까지 초과수익률 (11거래일)</span><span class="num bear">-6.6%</span></div>
+          <div style="margin-top:12px"><svg viewBox="0 0 270 150" width="100%" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif"><text x="0" y="25.9" font-size="8" fill="#8B95A1">10%</text><text x="0" y="55.7" font-size="8" fill="#8B95A1">0%</text><text x="0" y="85.4" font-size="8" fill="#8B95A1">-10%</text><text x="0" y="115.2" font-size="8" fill="#8B95A1">-20%</text><text x="0" y="145.0" font-size="8" fill="#8B95A1">-30%</text><line x1="30" x2="270" y1="52.7" y2="52.7" stroke="#D1D6DB"/><line x1="270.0" x2="270.0" y1="8" y2="142" stroke="#E5E8EB" stroke-dasharray="3 3"/><text x="268.0" y="149" font-size="7" fill="#8B95A1" text-anchor="end">60거래일</text><path d="M30.0,52.7 L34.1,55.6 L38.1,67.6 L42.2,61.6 L46.3,70.5 L50.3,67.6 L54.4,94.4 L58.5,100.3 L62.5,103.3 L66.6,94.4 L70.7,85.4 L74.7,86.9" fill="none" stroke="#8E929B" stroke-width="1.6"/><path d="M30.0,52.7 L34.1,49.7 L38.1,76.5 L42.2,58.6 L46.3,73.5 L50.3,70.5 L54.4,100.3 L58.5,118.2 L62.5,130.1 L66.6,112.2 L70.7,97.3 L74.7,106.3" fill="none" stroke="#1A237E" stroke-width="2"/><path d="M30.0,52.7 L34.1,55.1 L38.1,66.5 L42.2,60.0 L46.3,68.4 L50.3,64.9 L54.4,91.2 L58.5,96.7 L62.5,99.1 L66.6,89.7 L70.7,80.2 L74.7,81.2" fill="none" stroke="#3D5AFE" stroke-width="1.4" stroke-dasharray="4 3"/></svg></div>
+          <div class="legend"><span style="color:#1A237E">종목</span><span style="color:#8E929B">KOSPI</span><span style="color:#3D5AFE">예측 경로</span></div>
+          <div class="sm" style="margin-top:8px">KOSPI 대비 초과수익률의 부호로 판정해요. 상장폐지 종목은 빠져 있어 성적이 실제보다 좋게 보일 수 있어요.</div>
+        </div>
+        <div class="sm" style="margin:4px 0 6px">판정 상태 pill 예시</div>
+        <div class="row" style="flex-wrap:wrap;gap:6px">
+          <span class="pill" style="background:var(--accent-tint);color:var(--accent)">적중</span>
+          <span class="pill" style="background:var(--error-tint);color:var(--error)">빗나감</span>
+          <span class="pill" style="background:var(--subtle);color:var(--t2)">판정 제외 (예측 ±0.5%p 미만)</span>
+          <span class="pill" style="background:var(--subtle);color:var(--t2)">시세 부족으로 판정 불가</span>
+        </div>
+      </div>
+    </div>
+    <div class="spec">
+      <div class="screen-id">T-2 · 타임머신 모드 A</div>
+      <h2>단건 되감기 결과</h2>
+      <p>공시일 종가를 0%로 놓고, 이후 60거래일 동안 종목과 KOSPI의 누적 수익률을 그린다. 2초 동안 앞에서부터 선이 그려진다(재생 효과).</p>
+      <h3>각 요소의 의미</h3>
+      <ul>
+        <li>D-49: 판정에 필요한 60거래일 중 49거래일이 남았다.</li>
+        <li>예측: 모델이 본 KOSPI 대비 초과수익률. 실제: 지금까지 종목 수익률 − KOSPI 수익률.</li>
+        <li>예측 경로(점선): 예측이 맞는다면 종목이 있어야 할 자리. KOSPI 선 + 예측값 × 경과일/60.</li>
+        <li>판정: 60거래일이 지나면 예측과 실제의 부호가 같으면 적중, 다르면 빗나감. 예측이 ±0.5%p 미만이면 판정 제외.</li>
+      </ul>
+      <h3>데이터</h3>
+      <p><code>GET /analysis/reports/{id}/replay</code> → <code>status days_remaining base_date expected_car actual_excess_return_pct series[date, stock_return_pct, kospi_return_pct]</code></p>
+      <div class="ask"><b>디자인 요청.</b> 60거래일이 끝났을 때 예측과 실제의 차이가 한눈에 보이도록 영역 채움(맞으면 accent, 틀리면 error) 같은 표현을 제안해 주세요. "예측 경로"가 무엇인지 설명 없이도 읽히면 좋겠습니다.</div>
+    </div>
+  </section>
+
+  <!-- ───────── C-1 반박 모드 ───────── -->
+  <section class="screen">
+    <div class="phone">
+      <div class="status"><span>9:41</span><span>●●● ▮</span></div>
+      <div class="appbar">‹ &nbsp;분석 보고서</div>
+      <div class="body">
+        <div class="card" style="margin-top:8px">
+          <div class="between">
+            <div class="row"><span class="h-sm">신뢰 등급</span><span class="pill" style="background:var(--error-tint);color:var(--error)">하</span></div>
+            <span class="lbl">1 / 8점</span>
+          </div>
+          <div style="margin-top:6px">
+            <div class="crit"><span class="ic" style="color:var(--error)">⚠</span><span>추정 표본이 적어 계수가 불안정합니다<span class="ev">표본 크기 = 20 (권장 100 이상)</span></span></div>
+            <div class="crit"><span class="ic" style="color:var(--error)">⚠</span><span>재무 데이터가 비어 기여도를 계산하지 못한 지표가 있습니다<span class="ev">상위 5개 기여 지표 중 3개의 Δ가 0</span></span></div>
+            <div class="crit"><span class="ic" style="color:var(--t3)">ⓘ</span><span>과거 전적 표본이 부족합니다</span></div>
+            <div class="crit"><span class="ic" style="color:var(--t3)">ⓘ</span><span>지표 기여도에 z-score 정규화가 없습니다</span></div>
+            <div class="crit"><span class="ic" style="color:var(--t3)">ⓘ</span><span>신뢰구간은 아직 자리표시자입니다</span></div>
+            <div class="crit"><span class="ic" style="color:var(--t3)">ⓘ</span><span>1순위 테마만 사용합니다</span></div>
+          </div>
+          <div class="sm" style="margin-top:8px">등급 기준값은 임시로 정한 값이에요. 데이터가 쌓이면 조정합니다.</div>
+        </div>
+        <div class="sm" style="margin-top:4px">등급 배지: 상 = accent, 중 = 회색, 하 = error</div>
+      </div>
+    </div>
+    <div class="spec">
+      <div class="screen-id">C-1 · 반박 모드 펼침</div>
+      <h2>"이 분석이 틀렸다면?"</h2>
+      <p>리포트가 스스로 자기 약점을 밝힌다. LLM 없이 규칙으로 계산하므로 같은 리포트는 늘 같은 결과다.</p>
+      <h3>점수 (0~8점, 7↑ 상 · 4~6 중 · 3↓ 하)</h3>
+      <ul>
+        <li>모델 설명력 R² (0~2점), 표본 크기 (0~2점), 재무 Δ 결측 (0~2점), ML 데이터 충족률 90%↑ (1점), 과거 적중률 60%↑ (1점).</li>
+        <li>⚠ 경고 = 점수를 깎은 실제 약점. ⓘ 정보 = 점수와 무관한 참고 사항.</li>
+        <li>아래 세 줄(정규화 없음, 신뢰구간 자리표시자, 1순위 테마만)은 모든 리포트에 항상 나온다.</li>
+        <li>각 줄을 탭하면 근거 숫자(evidence)가 펼쳐진다. 시안은 앞 두 줄을 펼친 상태.</li>
+        <li>경고가 하나도 없으면 상단에 "이 리포트는 근거가 비교적 탄탄합니다".</li>
+      </ul>
+      <h3>데이터</h3>
+      <p><code>GET /analysis/reports/{id}/critique</code> → <code>grade score items[code, severity(warning|info), summary, evidence]</code></p>
+      <div class="ask"><b>디자인 요청.</b> 경고와 구조적 한계가 같은 목록에 섞여 있어 무게가 비슷해 보입니다. 두 그룹을 구분하는 방식, 등급을 직관적으로 보여주는 시각화(게이지 등)를 제안 부탁합니다.</div>
+    </div>
+  </section>
+
+  <!-- ───────── B-1 모델 성적표 ───────── -->
+  <section class="screen">
+    <div class="phone">
+      <div class="status"><span>9:41</span><span>●●● ▮</span></div>
+      <div class="appbar">‹ &nbsp;SK하이닉스</div>
+      <div class="body">
+        <div class="row" style="gap:16px;font-size:13px;font-weight:600;border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:12px">
+          <span style="color:var(--brand);border-bottom:2px solid var(--brand);padding-bottom:6px">분석</span><span class="sm">공시</span><span class="sm">차트·정보</span><span class="sm">재무</span><span class="sm">뉴스</span>
+        </div>
+        <div class="card" style="height:90px;opacity:.5"><div class="sm">테마 카드 (기존)</div></div>
+        <div class="card outlined" style="height:70px;opacity:.5"><div class="sm">60거래일 전망 ML 카드 (기존)</div></div>
+        <div class="card outlined">
+          <div class="row"><span class="h-sm">모델 성적표</span><span class="sm">ⓘ</span></div>
+          <div class="num" style="font-size:20px;color:var(--brand);margin-top:8px">12전 8승 · 적중률 67%</div>
+          <div class="sm">전체 20건 · 대기 3 · 판정 제외 4 · 시세 부족 1</div>
+          <div style="margin-top:10px">
+            <div class="between body-sm" style="margin:4px 0"><span>분기보고서</span><span class="lbl">5전 4승 · 표본 부족 (5건)</span></div>
+            <div class="between body-sm" style="margin:4px 0"><span>수시공시</span><span class="lbl">7전 4승 · 표본 부족 (7건)</span></div>
+            <div class="between body-sm" style="margin:4px 0"><span>사업보고서</span><span class="lbl">판정된 공시 없음</span></div>
+          </div>
+        </div>
+        <div class="section-title">공시 분석 보고서</div>
+      </div>
+    </div>
+    <div class="spec">
+      <div class="screen-id">B-1 · 타임머신 모드 B (종목 상세 › 분석 탭)</div>
+      <h2>모델 성적표</h2>
+      <p>이 종목의 과거 공시마다 예측 방향이 실제와 맞았는지 센 누적 전적이다. 공시 유형별로 쪼개 보여준다.</p>
+      <ul>
+        <li>판정 10건 미만이면 비율을 숨기고 "표본 부족 (N건)"으로 쓴다. 3전 2승을 67%로 쓰지 않기 위해서다.</li>
+        <li>대기 = 60거래일이 아직 안 지남, 판정 제외 = 예측 ±0.5%p 미만, 시세 부족 = 거래정지 등.</li>
+        <li>시안 숫자는 레이아웃 확인용 예시다. 현재 실데이터는 대부분 대기·판정 제외다.</li>
+      </ul>
+      <h3>데이터</h3>
+      <p><code>GET /analysis/{ticker}/track-record</code> → <code>total judged hits hit_rate neutral pending insufficient by_type[type, …]</code></p>
+      <div class="ask"><b>디자인 요청.</b> 승패를 막대나 점 배열로 시각화하는 방식, 유형별 비교가 한눈에 들어오는 표현을 제안해 주세요.</div>
+    </div>
+  </section>
+
+  <!-- ───────── N-1 하단 탭 ───────── -->
+  <section class="screen">
+    <div class="phone" style="height:220px">
+      <div class="status"><span>9:41</span><span>●●● ▮</span></div>
+      <div class="body"><div class="sm">각 탭 화면</div></div>
+      <div class="tabbar"><div class="on"><b>⌂</b>홈</div><div><b>◎</b>레이더</div><div><b>⌕</b>탐색</div><div><b>◬</b>알림</div><div><b>◯</b>MY</div></div>
+    </div>
+    <div class="spec">
+      <div class="screen-id">N-1</div>
+      <h2>하단 탭 5개</h2>
+      <p>홈, 레이더, 탐색, 알림, MY 순서다. 레이더는 두 번째 탭이다. 홈 화면에 있던 "공시 레이더" 진입 카드는 없앴다. 레이더 탭은 보고 있을 때만 실시간 연결과 애니메이션을 켠다.</p>
+      <div class="ask"><b>디자인 요청.</b> 레이더 탭 아이콘을 앱 로고(동심원)와 어울리게 다듬어 주세요. 활성 색은 brand(#1A237E)입니다.</div>
+    </div>
+  </section>
+</div>
+</body>
+</html>

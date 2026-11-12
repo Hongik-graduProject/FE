@@ -46,7 +46,7 @@ class _FinanceTabState extends State<FinanceTab> with AutomaticKeepAliveClientMi
   }
 
   Future<void> _refresh() async {
-    setState(() => _future = ApiService().getStockFinance(widget.ticker));
+    setState(() { _future = ApiService().getStockFinance(widget.ticker); });
     try {
       await _future;
     } catch (_) {} // 오류는 FutureBuilder 가 보여준다.

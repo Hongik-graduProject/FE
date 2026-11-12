@@ -1,13 +1,15 @@
-// lib/screens/company/report_detail_screen.dart — W-16 분석 보고서 상세
-import 'dart:math' as math;
-
+// lib/screens/company/report_detail_screen.dart — W-16 분석 보고서 상세 (Stitch "Disclosure Dossier").
+// 브리핑 두 번째 문장, 시장 구분, 이벤트 코드, 시뮬레이션·추적 알림은 데모용(lib/demo).
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../../demo/demo_data.dart';
 import '../../models/analysis_model.dart';
 import '../../services/api_service.dart';
 import '../../utils/design_tokens.dart';
 import '../../utils/format.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/ds.dart';
+import 'report_extras.dart';
 
 class ReportDetailScreen extends StatefulWidget {
   const ReportDetailScreen({super.key});
@@ -43,17 +45,38 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
       backgroundColor: AppColors.canvas,
       appBar: AppBar(
         backgroundColor: AppColors.canvas,
-        foregroundColor: AppColors.textPrimary,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        title: const Text('분석 보고서', style: AppText.headlineSm),
+        title: const Text('Disclosure Dossier', style: AppText.headlineMd),
+        actions: [
+          FutureBuilder<ReportDetail>(
+            future: _future,
+            builder: (context, s) => IconButton(
+              tooltip: '공유',
+              icon: const Icon(Icons.share_outlined),
+              onPressed: s.data?.sourceDisclosure == null
+                  ? null
+                  : () {
+                      Clipboard.setData(ClipboardData(text: s.data!.sourceDisclosure!.dartUrl));
+                      ScaffoldMessenger.of(context)
+                          .showSnackBar(const SnackBar(content: Text('공시 링크를 복사했어요')));
+                    },
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.only(right: AppSpace.md),
+            child: CircleAvatar(
+              radius: 15,
+              backgroundColor: AppColors.accentTint,
+              child: Icon(Icons.person_outline_rounded, size: 17, color: AppColors.accent),
+            ),
+          ),
+        ],
       ),
       body: FutureBuilder<ReportDetail>(
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Padding(
-              padding: EdgeInsets.all(AppSpace.lg),
+              padding: EdgeInsets.all(AppSpace.md),
               child: Column(children: [
                 SkeletonBox(height: 260, radius: AppRadius.lg),
                 SizedBox(height: AppSpace.xl),
@@ -63,8 +86,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
           }
           if (snapshot.hasError) {
             return Center(
-              child: ErrorRetry(
-                  message: snapshot.error.toString(), onRetry: _retry),
+              child: ErrorRetry(message: snapshot.error.toString(), onRetry: _retry),
             );
           }
           return _ReportBody(report: snapshot.data!);
@@ -83,14 +105,24 @@ class _ReportBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final src = report.sourceDisclosure;
+    const gap = SizedBox(height: AppSpace.md);
     return ListView(
-      padding: const EdgeInsets.fromLTRB(
-          AppSpace.lg, AppSpace.sm, AppSpace.lg, 0),
+      padding: const EdgeInsets.fromLTRB(AppSpace.md, 0, AppSpace.md, AppSpace.lg),
       children: [
+        _TerminalStrip(report: report),
+        gap,
         _HeroCard(report: report),
+        gap,
+        _BriefingPanel(report: report),
+        gap,
+        ReplaySection(reportId: report.id, name: report.name),
+        gap,
+        CritiqueSection(reportId: report.id, ticker: report.ticker),
+        gap,
+        _ActionRow(report: report),
         if (report.metricContributions.isNotEmpty) ...[
           const SizedBox(height: AppSpace.xl),
-          const SectionTitle('왜 이렇게 나왔나요?'),
+          const SectionTitle('지표별 기여도 상세'),
           _ContributionsCard(items: report.metricContributions),
         ],
         if (_FinanceCard.hasData(report.metrics)) ...[
@@ -98,51 +130,14 @@ class _ReportBody extends StatelessWidget {
           const SectionTitle('핵심 재무'),
           _FinanceCard(metrics: report.metrics),
         ],
-        if (report.keyFindings.isNotEmpty) ...[
-          const SizedBox(height: AppSpace.xl),
-          const SectionTitle('핵심 발견'),
-          DsCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                for (final f in report.keyFindings)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('•  ', style: AppText.bodyMd),
-                        Expanded(child: Text(f, style: AppText.bodyMd)),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
         if (src != null) ...[
           const SizedBox(height: AppSpace.xl),
-          const SectionTitle('원문 공시'),
-          DsCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(src.title.trim(), style: AppText.labelLg),
-                if (DateTime.tryParse(src.filedAt) != null) ...[
-                  const SizedBox(height: AppSpace.xs),
-                  Text('${ymd(DateTime.parse(src.filedAt))} 공시',
-                      style: AppText.labelSm),
-                ],
-                const SizedBox(height: AppSpace.md),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () => openExternalUrl(context, src.dartUrl),
-                    icon: const Icon(Icons.open_in_new_rounded, size: 16),
-                    label: const Text('DART에서 원문 보기'),
-                  ),
-                ),
-              ],
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => openExternalUrl(context, src.dartUrl),
+              icon: const Icon(Icons.open_in_new_rounded, size: 16),
+              label: const Text('DART에서 원문 보기'),
             ),
           ),
         ],
@@ -152,16 +147,32 @@ class _ReportBody extends StatelessWidget {
   }
 }
 
-// ─── Hero ────────────────────────────────────────────────────────────────────
+// ─── 터미널 줄 ────────────────────────────────────────────────────────────────
 
-String? _verdict(double? car) {
-  if (car == null) return null;
-  if (car >= 1.0) return '이 공시는 주가에 긍정적일 것으로 분석돼요';
-  if (car > 0) return '이 공시는 주가에 소폭 긍정적일 것으로 분석돼요';
-  if (car <= -1.0) return '이 공시는 주가에 부정적일 것으로 분석돼요';
-  if (car < 0) return '이 공시는 주가에 소폭 부정적일 것으로 분석돼요';
-  return '이 공시는 주가에 영향이 거의 없을 것으로 분석돼요';
+class _TerminalStrip extends StatelessWidget {
+  final ReportDetail report;
+  const _TerminalStrip({required this.report});
+
+  @override
+  Widget build(BuildContext context) {
+    final isPeriodic = RegExp(r'보고서').hasMatch(report.title);
+    const style = TextStyle(
+        fontFamily: AppText.mono, fontSize: 11, letterSpacing: 0.6, color: AppColors.textSecondary, height: 1.4);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpace.sm),
+      child: Row(children: [
+        Container(width: 7, height: 7, decoration: const BoxDecoration(color: AppColors.brand, shape: BoxShape.circle)),
+        const SizedBox(width: 6),
+        const Expanded(child: Text('QUANT RADAR INTEL ·\nTERMINAL ACTIVE', style: style)),
+        Text('DART REF:\n${demoDartRef(report)}', style: style.copyWith(color: AppColors.textPrimary)),
+        Container(width: 1, height: 26, margin: const EdgeInsets.symmetric(horizontal: 8), color: AppColors.border),
+        Text(isPeriodic ? 'R-1\nREPORT' : 'C-1\nEVENT', style: style),
+      ]),
+    );
+  }
 }
+
+// ─── Hero ────────────────────────────────────────────────────────────────────
 
 class _HeroCard extends StatelessWidget {
   final ReportDetail report;
@@ -170,126 +181,269 @@ class _HeroCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final car = report.expectedCar;
-    // 공시일이 있으면 공시일, 없으면 보고서 생성일
-    final date = DateTime.tryParse(
-        report.sourceDisclosure?.filedAt ?? report.generatedAt);
-    final verdict = _verdict(car);
-    final theme = report.appliedTheme;
+    final date = DateTime.tryParse(report.sourceDisclosure?.filedAt ?? report.generatedAt);
+    final (signal, sigFg, sigBg) = car == null
+        ? ('분석 대기', AppColors.textSecondary, AppColors.raised)
+        : car >= 0.5
+            ? ('BULLISH 시그널', AppColors.bull, AppColors.bullTint)
+            : car <= -0.5
+                ? ('BEARISH 시그널', AppColors.bear, AppColors.bearTint)
+                : ('NEUTRAL', AppColors.textSecondary, AppColors.raised);
+    final lo = report.carLower, hi = report.carUpper;
 
-    return DsCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('${report.name} · ${report.ticker}', style: AppText.labelMd),
-          const SizedBox(height: AppSpace.xs),
-          Text(report.title.trim(), style: AppText.headlineMd),
-          if (date != null) ...[
-            const SizedBox(height: AppSpace.xs),
-            Text('${ymd(date)} 공시', style: AppText.labelSm),
-          ],
-          if (verdict != null) ...[
-            const SizedBox(height: AppSpace.md),
-            Text(verdict,
-                style: AppText.bodyLg.copyWith(fontWeight: FontWeight.w600)),
-          ],
-          const SizedBox(height: AppSpace.md),
-          const Row(children: [
-            Text('예상 CAR', style: AppText.labelMd),
-            SizedBox(width: 4),
-            InfoButton(
-              title: '예상 CAR이란?',
-              body: '공시가 나온 뒤 며칠 동안 주가가 시장 평균보다 얼마나 더 오르거나 '
-                  '내릴지(누적 초과수익률) 예측한 값이에요. 플러스면 긍정, 마이너스면 부정적인 반응을 뜻해요.',
+    return Container(
+      padding: const EdgeInsets.all(AppSpace.md),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: AppColors.border),
+        boxShadow: AppShadow.raised,
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Expanded(
+            child: Wrap(crossAxisAlignment: WrapCrossAlignment.center, spacing: 8, runSpacing: 4, children: [
+              Text(report.name, style: AppText.headlineLg),
+              Text(report.ticker, style: AppText.numericMetric.copyWith(fontSize: 15, color: AppColors.textSecondary)),
+              MonoBadge(demoLargeCap(report.ticker) ? 'KOSPI 대형주' : 'KOSPI 중소형', fg: AppColors.accent, bg: AppColors.accentTint),
+            ]),
+          ),
+          MonoBadge(signal, fg: sigFg, bg: sigBg, icon: Icons.show_chart_rounded),
+        ]),
+        const SizedBox(height: 6),
+        Text('${report.title.trim()}${date == null ? '' : ' · ${ymd(date, sep: '.')} 공시 접수'}',
+            style: AppText.bodySm),
+        if (report.appliedTheme != null) ...[
+          const SizedBox(height: 8),
+          Row(children: [
+            Flexible(child: ThemeChip(report.appliedTheme!.name)),
+            if (report.appliedTheme!.routingScore != null) ...[
+              const SizedBox(width: 8),
+              Text('테마 일치도 ${report.appliedTheme!.routingScore!.toStringAsFixed(2)}', style: AppText.monoLabel),
+            ],
+          ]),
+        ],
+        const SizedBox(height: AppSpace.md),
+        IntrinsicHeight(
+          child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Expanded(
+              child: _HeroTile(
+                label: '예상 CAR (누적초과수익)',
+                info: true,
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(car == null ? '분석 대기' : '${arrow(car)} ${signedPct(car, digits: 1)}',
+                      style: AppText.numericHero.copyWith(color: AppColors.market(car), fontSize: 28)),
+                  const SizedBox(height: 4),
+                  const Text('이벤트 윈도우: T-1 ~ T+60', style: AppText.monoLabel),
+                ]),
+              ),
+            ),
+            const SizedBox(width: AppSpace.sm),
+            Expanded(
+              child: _HeroTile(
+                label: '95% 신뢰 밴드 (CI)',
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(lo == null || hi == null ? '—' : '${signedPct(lo, digits: 1)} ~\n${signedPct(hi, digits: 1)}',
+                      style: AppText.numericMetric.copyWith(fontSize: 17)),
+                  const SizedBox(height: 8),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(3),
+                    child: Container(
+                      height: 6,
+                      color: AppColors.raised,
+                      alignment: Alignment.center,
+                      child: FractionallySizedBox(
+                        widthFactor: 0.62,
+                        child: Container(
+                          decoration: const BoxDecoration(
+                              gradient: LinearGradient(colors: [Color(0xFFDCE1FF), Color(0xFFFFB4AA)])),
+                        ),
+                      ),
+                    ),
+                  ),
+                ]),
+              ),
             ),
           ]),
-          Text(
-            car == null ? '분석 대기' : '${arrow(car)} ${signedPct(car, digits: 1)}'.trim(),
-            style: AppText.numericHero.copyWith(color: AppColors.market(car)),
-          ),
-          if (car != null && report.carLower != null && report.carUpper != null) ...[
-            const SizedBox(height: AppSpace.md),
-            _RangeBar(
-                lower: report.carLower!, upper: report.carUpper!, value: car),
-            const SizedBox(height: AppSpace.xs),
-            Text(
-              '95% 범위 ${signedPct(report.carLower, digits: 1)} ~ ${signedPct(report.carUpper, digits: 1)}',
-              style: AppText.labelSm,
-            ),
-          ],
-          if (theme != null) ...[
-            const SizedBox(height: AppSpace.md),
-            Row(children: [
-              Flexible(child: ThemeChip(theme.name)),
-              if (theme.routingScore != null) ...[
-                const SizedBox(width: AppSpace.sm),
-                Text('테마 일치도 ${theme.routingScore!.toStringAsFixed(2)}',
-                    style: AppText.labelMd),
-              ],
-            ]),
-          ],
-        ],
-      ),
+        ),
+      ]),
     );
   }
 }
 
-/// 95% 범위 막대: 범위 구간은 연한 색, 예측값은 점, 0 위치에 세로선.
-class _RangeBar extends StatelessWidget {
-  final double lower;
-  final double upper;
-  final double value;
-  const _RangeBar(
-      {required this.lower, required this.upper, required this.value});
+class _HeroTile extends StatelessWidget {
+  final String label;
+  final Widget child;
+  final bool info;
+  const _HeroTile({required this.label, required this.child, this.info = false});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+            color: AppColors.canvas,
+            border: Border.all(color: AppColors.border),
+            borderRadius: BorderRadius.circular(AppRadius.sm)),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Expanded(child: Text(label, style: AppText.monoLabel)),
+            if (info)
+              const InfoButton(
+                title: '예상 CAR이란?',
+                body: '공시가 나온 뒤 주가가 시장 평균보다 얼마나 더 오르거나 내릴지(누적 초과수익률) '
+                    '예측한 값이에요. 플러스면 긍정, 마이너스면 부정적인 반응을 뜻해요.',
+              ),
+          ]),
+          const SizedBox(height: 8),
+          child,
+        ]),
+      );
+}
+
+// ─── AI 브리핑 ────────────────────────────────────────────────────────────────
+
+class _BriefingPanel extends StatelessWidget {
+  final ReportDetail report;
+  const _BriefingPanel({required this.report});
 
   @override
   Widget build(BuildContext context) {
-    final lo = [lower, value, 0.0].reduce(math.min);
-    final hi = [upper, value, 0.0].reduce(math.max);
-    final pad = (hi - lo) * 0.1 + 0.01;
-    final min = lo - pad, span = hi + pad - min;
-    return LayoutBuilder(builder: (context, c) {
-      double x(double v) => (v - min) / span * c.maxWidth;
-      return SizedBox(
-        height: 16,
-        child: Stack(clipBehavior: Clip.none, children: [
-          Positioned(
-            left: 0,
-            right: 0,
-            top: 6,
-            height: 4,
-            child: Container(
-                decoration: BoxDecoration(
-                    color: AppColors.subtle,
-                    borderRadius: BorderRadius.circular(2))),
-          ),
-          Positioned(
-            left: x(lower),
-            width: math.max(x(upper) - x(lower), 2),
-            top: 5,
-            height: 6,
-            child: Container(
-                decoration: BoxDecoration(
-                    color: AppColors.marketTint(value),
-                    borderRadius: BorderRadius.circular(3))),
-          ),
-          Positioned(
-              left: x(0) - 0.5,
-              width: 1,
-              top: 0,
-              bottom: 0,
-              child: Container(color: AppColors.borderStrong)),
-          Positioned(
-            left: x(value) - 5,
-            top: 3,
-            width: 10,
-            height: 10,
-            child: Container(
-                decoration: BoxDecoration(
-                    color: AppColors.market(value), shape: BoxShape.circle)),
-          ),
-        ]),
-      );
-    });
+    final top = [...report.metricContributions]
+      ..sort((a, b) => b.contribution.abs().compareTo(a.contribution.abs()));
+    final sum = top.fold<double>(0, (s, m) => s + m.contribution.abs());
+    final tiles = top.where((m) => m.contribution != 0).take(3).toList();
+    final quote = report.summary.trim().isNotEmpty
+        ? report.summary.trim()
+        : (report.keyFindings.isNotEmpty ? report.keyFindings.first : report.title);
+    return DossierPanel(
+      icon: Icons.psychology_alt_rounded,
+      title: 'AI 펀드매니저 핵심 분석 브리핑',
+      badge: const MonoBadge('ALPHA ENGINE v4.2', fg: AppColors.textSecondary, bg: AppColors.raised),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+              color: AppColors.canvas,
+              border: Border.all(color: AppColors.border),
+              borderRadius: BorderRadius.circular(AppRadius.sm)),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('"$quote"',
+                style: AppText.bodyLg.copyWith(color: const Color(0xFFFFB4AA), fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
+            Text(demoBriefing(report), style: AppText.bodySm),
+            for (final f in report.keyFindings.skip(report.summary.trim().isEmpty ? 1 : 0).take(3)) ...[
+              const SizedBox(height: 6),
+              Text('· $f', style: AppText.bodySm),
+            ],
+          ]),
+        ),
+        if (tiles.isNotEmpty) ...[
+          const SizedBox(height: AppSpace.sm),
+          Row(children: [
+            for (var i = 0; i < tiles.length; i++) ...[
+              if (i > 0) const SizedBox(width: 6),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                      color: AppColors.raised, borderRadius: BorderRadius.circular(AppRadius.sm)),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(tiles[i].displayName,
+                        maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.monoLabel),
+                    const SizedBox(height: 4),
+                    Text('${signedPct(tiles[i].contribution, digits: 1)}p',
+                        style: AppText.numericMetric
+                            .copyWith(fontSize: 15, color: AppColors.market(tiles[i].contribution))),
+                    Text('기여도 ${(tiles[i].contribution.abs() / (sum == 0 ? 1 : sum) * 100).round()}%',
+                        style: AppText.monoLabel),
+                  ]),
+                ),
+              ),
+            ],
+          ]),
+        ],
+      ]),
+    );
+  }
+}
+
+// ─── 하단 동작 ────────────────────────────────────────────────────────────────
+
+class _ActionRow extends StatefulWidget {
+  final ReportDetail report;
+  const _ActionRow({required this.report});
+
+  @override
+  State<_ActionRow> createState() => _ActionRowState();
+}
+
+class _ActionRowState extends State<_ActionRow> {
+  bool _tracking = false;
+
+  void _simulate() {
+    final base = widget.report.expectedCar ?? 0;
+    var beta = 1.0;
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.card,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet))),
+      builder: (context) => StatefulBuilder(
+        builder: (context, set) {
+          final car = base * beta;
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xl),
+            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Text('가설 시뮬레이션 조정', style: AppText.headlineMd),
+              const SizedBox(height: 4),
+              const Text('테마 민감도(β) 가정을 바꾸면 예상 CAR 이 어떻게 달라지는지 봅니다.', style: AppText.bodySm),
+              const SizedBox(height: AppSpace.lg),
+              Row(children: [
+                const Text('β 배율', style: AppText.monoLabel),
+                const Spacer(),
+                Text('×${beta.toStringAsFixed(2)}', style: AppText.numericMetric.copyWith(fontSize: 15)),
+              ]),
+              Slider(value: beta, min: 0, max: 2, divisions: 40, onChanged: (v) => set(() => beta = v)),
+              const SizedBox(height: AppSpace.sm),
+              Row(children: [
+                const Text('시뮬레이션 예상 CAR', style: AppText.labelLg),
+                const Spacer(),
+                Text('${arrow(car)} ${signedPct(car, digits: 1)}',
+                    style: AppText.numericHero.copyWith(fontSize: 26, color: AppColors.market(car))),
+              ]),
+            ]),
+          );
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(children: [
+      Expanded(
+        child: OutlinedButton.icon(
+          style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+          onPressed: _simulate,
+          icon: const Icon(Icons.tune_rounded, size: 18),
+          label: const Text('시뮬레이션 조정'),
+        ),
+      ),
+      const SizedBox(width: AppSpace.sm),
+      Expanded(
+        child: ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+          onPressed: () {
+            setState(() => _tracking = !_tracking);
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text(_tracking ? '판정일까지 추적 알림을 보내드릴게요' : '추적 알림을 껐어요')));
+          },
+          icon: Icon(_tracking ? Icons.notifications_active : Icons.notification_add_outlined, size: 18),
+          label: Text(_tracking ? '추적 알림 켜짐' : '추적 알림 설정'),
+        ),
+      ),
+    ]);
   }
 }
 

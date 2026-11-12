@@ -1,4 +1,6 @@
 // lib/services/api_service.dart
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import '../utils/constants.dart';
 import '../models/auth_model.dart';
@@ -6,8 +8,10 @@ import '../models/analysis_model.dart';
 import '../models/folder_model.dart';
 import '../models/market_model.dart';
 import '../models/notification_model.dart';
+import '../models/radar_model.dart';
 import '../models/stock_model.dart';
 import '../models/theme_model.dart';
+import 'sse/sse_client.dart';
 import 'token_service.dart';
 
 class ApiService {
@@ -457,6 +461,71 @@ class ApiService {
       return ReportDetail.fromJson(response.data);
     } on DioException catch (e) {
       throw _handleError(e);
+    }
+  }
+
+  /// 반박 모드: 리포트 신뢰 등급과 약점 목록
+  Future<CritiqueResponse> getCritique(int reportId) async {
+    try {
+      final r = await _dio.get('/analysis/reports/$reportId/critique');
+      return CritiqueResponse.fromJson(r.data);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// 타임머신 A: 공시 시점부터 60거래일 실제 초과수익률 되감기 (시세 적재로 수 초 걸릴 수 있음)
+  Future<ReplayResponse> getReplay(int reportId) async {
+    try {
+      final r = await _dio.get('/analysis/reports/$reportId/replay',
+          options: Options(receiveTimeout: const Duration(seconds: 60)));
+      return ReplayResponse.fromJson(r.data);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// 타임머신 B: 종목 모델 적중 전적 (type: report|quarterly|interim|event, null=전체)
+  Future<TrackRecordResponse> getTrackRecord(String ticker,
+      {String? type}) async {
+    try {
+      final r = await _dio.get('/analysis/$ticker/track-record',
+          queryParameters: {if (type != null) 'type': type},
+          options: Options(receiveTimeout: const Duration(seconds: 60)));
+      return TrackRecordResponse.fromJson(r.data);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // ──────────────────────────────────────────
+  // 레이더 API
+  // ──────────────────────────────────────────
+
+  /// [from, to) 구간 공시 점. 생략하면 최근 30분. 구간은 최대 24시간.
+  Future<List<RadarPoint>> getRadarPoints({DateTime? from, DateTime? to}) async {
+    try {
+      final r = await _dio.get('/radar/points', queryParameters: {
+        if (from != null) 'from': from.toUtc().toIso8601String(),
+        if (to != null) 'to': to.toUtc().toIso8601String(),
+      });
+      return ((r.data as Map<String, dynamic>)['data'] as List)
+          .map((e) => RadarPoint.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// 실시간 레이더 SSE. "disclosure"(새 공시, 회색) · "report"(같은 공시에 CAR 채움) 이벤트.
+  /// 서버가 30분 뒤 스트림을 닫으므로 호출 측이 다시 연결한다.
+  Stream<RadarPoint> radarStream() async* {
+    final token = await TokenService.getAccessToken();
+    final events = openSse(Uri.parse('${AppConstants.baseUrl}/radar/stream'),
+        {if (token != null) 'Authorization': 'Bearer $token'});
+    await for (final e in events) {
+      if (e.event != 'disclosure' && e.event != 'report') continue;
+      yield RadarPoint.fromJson(jsonDecode(e.data) as Map<String, dynamic>);
     }
   }
 

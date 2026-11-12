@@ -225,7 +225,7 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: Icons.star_outline_rounded,
               title: '관심종목을 추가하면 새 공시 분석을 모아 보여드려요',
               actionLabel: '종목 찾아보기',
-              onAction: () => MainShellScope.maybeOf(context)?.goTo(1),
+              onAction: () => MainShellScope.maybeOf(context)?.goTo(2),
             )
           else ...[
             SectionTitle(

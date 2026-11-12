@@ -5,6 +5,7 @@ import '../../services/api_service.dart';
 import '../../utils/design_tokens.dart';
 import '../../utils/format.dart';
 import '../../widgets/ds.dart';
+import 'report_extras.dart';
 
 class AnalysisTab extends StatefulWidget {
   final String ticker;
@@ -20,6 +21,7 @@ class _AnalysisTabState extends State<AnalysisTab>
   late Future<ThemesResponse> _themesFuture;
   late Future<PredictionResponse?> _predFuture;
   late Future<ReportsResponse> _reportsFuture;
+  late Future<TrackRecordResponse> _trackFuture;
 
   @override
   bool get wantKeepAlive => true;
@@ -36,6 +38,7 @@ class _AnalysisTabState extends State<AnalysisTab>
     // 섹션마다 FutureBuilder 가 따로 있어 예측 실패가 다른 섹션을 막지 않는다. 실패는 그 카드에서 다시 시도한다.
     _predFuture = ApiService().getStockPrediction(widget.ticker);
     _reportsFuture = ApiService().getStockReports(widget.ticker);
+    _trackFuture = ApiService().getTrackRecord(widget.ticker);
   }
 
   Future<void> _refresh() async {
@@ -44,6 +47,7 @@ class _AnalysisTabState extends State<AnalysisTab>
       _themesFuture.then((_) {}, onError: (_) {}),
       _predFuture.then((_) {}, onError: (_) {}),
       _reportsFuture.then((_) {}, onError: (_) {}),
+      _trackFuture.then((_) {}, onError: (_) {}),
     ]);
   }
 
@@ -66,8 +70,7 @@ class _AnalysisTabState extends State<AnalysisTab>
                 return DsCard(
                   child: ErrorRetry(
                     message: snap.error.toString(),
-                    onRetry: () => setState(() => _themesFuture =
-                        ApiService().getStockThemes(widget.ticker)),
+                    onRetry: () => setState(() { _themesFuture = ApiService().getStockThemes(widget.ticker); }),
                   ),
                 );
               }
@@ -77,8 +80,26 @@ class _AnalysisTabState extends State<AnalysisTab>
           const SizedBox(height: AppSpace.md),
           _PredictionSection(
             future: _predFuture,
-            onRetry: () => setState(
-                () => _predFuture = ApiService().getStockPrediction(widget.ticker)),
+            onRetry: () => setState(() { _predFuture = ApiService().getStockPrediction(widget.ticker); }),
+          ),
+          const SizedBox(height: AppSpace.md),
+          FutureBuilder<TrackRecordResponse>(
+            future: _trackFuture,
+            builder: (context, snap) {
+              if (snap.connectionState == ConnectionState.waiting) {
+                return const SkeletonBox(height: 120, radius: AppRadius.lg);
+              }
+              if (snap.hasError) {
+                return DsCard(
+                  outlined: true,
+                  child: ErrorRetry(
+                    message: snap.error.toString(),
+                    onRetry: () => setState(() { _trackFuture = ApiService().getTrackRecord(widget.ticker); }),
+                  ),
+                );
+              }
+              return TrackRecordCard(res: snap.data!);
+            },
           ),
           const SizedBox(height: AppSpace.xl),
           const SectionTitle('공시 분석 보고서'),
@@ -100,8 +121,7 @@ class _AnalysisTabState extends State<AnalysisTab>
               if (snap.hasError) {
                 return ErrorRetry(
                   message: snap.error.toString(),
-                  onRetry: () => setState(() => _reportsFuture =
-                      ApiService().getStockReports(widget.ticker)),
+                  onRetry: () => setState(() { _reportsFuture = ApiService().getStockReports(widget.ticker); }),
                 );
               }
               final reports = snap.data!.reports;

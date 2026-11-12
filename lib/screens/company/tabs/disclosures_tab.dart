@@ -42,7 +42,7 @@ class _DisclosuresTabState extends State<DisclosuresTab>
       ApiService().getStockDisclosures(widget.ticker, size: 100);
 
   Future<void> _refresh() async {
-    setState(() => _future = _load());
+    setState(() { _future = _load(); });
     try {
       await _future;
     } catch (_) {} // 오류는 FutureBuilder 가 보여준다.

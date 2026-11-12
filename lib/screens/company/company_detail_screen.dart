@@ -84,7 +84,7 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen>
   }
 
   Future<void> _reloadDetail() async {
-    setState(() => _detailFuture = _loadDetail()..ignore());
+    setState(() { _detailFuture = _loadDetail()..ignore(); });
     try {
       await _detailFuture;
     } catch (_) {} // 오류는 차트·정보 탭이 보여준다.

@@ -360,3 +360,170 @@ class PredictionResponse {
     );
   }
 }
+
+// ─── 반박 모드 (GET /analysis/reports/{id}/critique) ─────────────────────────
+
+class CritiqueItem {
+  final String code;
+  final String severity; // "warning" | "info"
+  final String summary;
+  final String evidence;
+
+  const CritiqueItem({
+    required this.code,
+    required this.severity,
+    required this.summary,
+    required this.evidence,
+  });
+
+  bool get isWarning => severity == 'warning';
+
+  factory CritiqueItem.fromJson(Map<String, dynamic> json) => CritiqueItem(
+        code: json['code'] as String,
+        severity: json['severity'] as String,
+        summary: json['summary'] as String,
+        evidence: (json['evidence'] as String?) ?? '',
+      );
+}
+
+class CritiqueResponse {
+  final String grade; // 상 | 중 | 하
+  final int score; // 0~8
+  final List<CritiqueItem> items;
+
+  const CritiqueResponse(
+      {required this.grade, required this.score, required this.items});
+
+  factory CritiqueResponse.fromJson(Map<String, dynamic> json) {
+    final data = json['data'] as Map<String, dynamic>;
+    return CritiqueResponse(
+      grade: data['grade'] as String,
+      score: data['score'] as int,
+      items: (data['items'] as List? ?? [])
+          .map((e) => CritiqueItem.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
+
+// ─── 타임머신 (replay · track-record) ────────────────────────────────────────
+
+class ReplayPoint {
+  final String date;
+  final double stockReturnPct;
+  final double kospiReturnPct;
+
+  const ReplayPoint(
+      {required this.date,
+      required this.stockReturnPct,
+      required this.kospiReturnPct});
+
+  double get excessPct => stockReturnPct - kospiReturnPct;
+
+  factory ReplayPoint.fromJson(Map<String, dynamic> json) => ReplayPoint(
+        date: json['date'] as String,
+        stockReturnPct: (json['stock_return_pct'] as num).toDouble(),
+        kospiReturnPct: (json['kospi_return_pct'] as num).toDouble(),
+      );
+}
+
+class ReplayResponse {
+  final int reportId;
+  final String ticker;
+  final String? disclosureType;
+  final String? asOf;
+  final String? baseDate;
+  final String? endDate;
+  final double? expectedCar;
+  final double? actualExcessReturnPct;
+  // HIT | MISS | NEUTRAL | PENDING | INSUFFICIENT_DATA
+  final String status;
+  final int? daysRemaining;
+  final List<ReplayPoint> series;
+
+  const ReplayResponse({
+    required this.reportId,
+    required this.ticker,
+    this.disclosureType,
+    this.asOf,
+    this.baseDate,
+    this.endDate,
+    this.expectedCar,
+    this.actualExcessReturnPct,
+    required this.status,
+    this.daysRemaining,
+    required this.series,
+  });
+
+  factory ReplayResponse.fromJson(Map<String, dynamic> json) {
+    final data = json['data'] as Map<String, dynamic>;
+    return ReplayResponse(
+      reportId: data['report_id'] as int,
+      ticker: data['ticker'] as String,
+      disclosureType: data['disclosure_type'] as String?,
+      asOf: data['as_of'] as String?,
+      baseDate: data['base_date'] as String?,
+      endDate: data['end_date'] as String?,
+      expectedCar: (data['expected_car'] as num?)?.toDouble(),
+      actualExcessReturnPct:
+          (data['actual_excess_return_pct'] as num?)?.toDouble(),
+      status: data['status'] as String,
+      daysRemaining: data['days_remaining'] as int?,
+      series: (data['series'] as List? ?? [])
+          .map((e) => ReplayPoint.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
+
+class TrackRecord {
+  final int total;
+  final int judged;
+  final int hits;
+  final double? hitRate; // judged < 10 이면 null
+  final int neutral;
+  final int pending;
+  final int insufficient;
+
+  const TrackRecord({
+    required this.total,
+    required this.judged,
+    required this.hits,
+    this.hitRate,
+    required this.neutral,
+    required this.pending,
+    required this.insufficient,
+  });
+
+  // BE 는 @JsonUnwrapped 로 전적 필드를 상위 객체에 펼친다.
+  factory TrackRecord.fromJson(Map<String, dynamic> json) => TrackRecord(
+        total: json['total'] as int,
+        judged: json['judged'] as int,
+        hits: json['hits'] as int,
+        hitRate: (json['hit_rate'] as num?)?.toDouble(),
+        neutral: json['neutral'] as int,
+        pending: json['pending'] as int,
+        insufficient: json['insufficient'] as int,
+      );
+}
+
+class TrackRecordResponse {
+  final String ticker;
+  final TrackRecord record;
+  final List<(String type, TrackRecord record)> byType;
+
+  const TrackRecordResponse(
+      {required this.ticker, required this.record, required this.byType});
+
+  factory TrackRecordResponse.fromJson(Map<String, dynamic> json) {
+    final data = json['data'] as Map<String, dynamic>;
+    return TrackRecordResponse(
+      ticker: data['ticker'] as String,
+      record: TrackRecord.fromJson(data),
+      byType: [
+        for (final e in (data['by_type'] as List? ?? []))
+          ((e as Map<String, dynamic>)['type'] as String, TrackRecord.fromJson(e)),
+      ],
+    );
+  }
+}

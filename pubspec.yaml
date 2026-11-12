@@ -37,6 +37,9 @@ dependencies:
   # 종목 상세 정보 탭의 일별 주가 차트
   fl_chart: ^0.69.0
 
+  # 웹에서 레이더 SSE 를 받는다 (Dio 웹 어댑터는 응답을 스트리밍하지 않음). 이미 전이 의존성.
+  web: ^1.1.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -44,3 +47,15 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  # Stitch "Disclosure Radar" 디자인 시스템 글꼴 (OFL, assets/fonts/OFL.txt). 가변 글꼴이라 굵기는 fontVariations 로 준다.
+  fonts:
+    - family: SpaceGrotesk
+      fonts:
+        - asset: assets/fonts/SpaceGrotesk.ttf
+    - family: HankenGrotesk
+      fonts:
+        - asset: assets/fonts/HankenGrotesk.ttf
+    - family: JetBrainsMono
+      fonts:
+        - asset: assets/fonts/JetBrainsMono.ttf

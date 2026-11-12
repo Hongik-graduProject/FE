@@ -17,7 +17,7 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
-  static const _tabIndex = 2; // MainShell 의 알림 탭 위치
+  static const _tabIndex = 3; // MainShell 의 알림 탭 위치
 
   NotificationsResponse? _data;
   List<NotificationItem> _items = [];
